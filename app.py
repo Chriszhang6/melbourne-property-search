@@ -103,6 +103,29 @@ def search():
         logger.error(f"处理请求时出错: {str(e)}")
         return jsonify({'error': str(e)}), 500
 
+@app.route('/test_api', methods=['GET'])
+def test_api():
+    """测试OpenAI API连接"""
+    try:
+        response = openai.chat.completions.create(
+            model="gpt-3.5-turbo",
+            messages=[
+                {"role": "user", "content": "Hello, this is a test."}
+            ],
+            max_tokens=10
+        )
+        return jsonify({
+            'status': 'success',
+            'message': 'API连接正常',
+            'response': response.choices[0].message.content
+        })
+    except Exception as e:
+        logger.error(f"API测试失败: {str(e)}")
+        return jsonify({
+            'status': 'error',
+            'message': f'API连接失败: {str(e)}'
+        }), 500
+
 @app.errorhandler(500)
 def internal_error(error):
     logger.error(f"服务器内部错误: {error}")
