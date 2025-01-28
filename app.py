@@ -6,6 +6,16 @@ from functools import lru_cache
 import time
 from dotenv import load_dotenv
 import tempfile
+import logging
+import sys
+
+# 配置日志
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    stream=sys.stdout
+)
+logger = logging.getLogger(__name__)
 
 # 加载环境变量
 load_dotenv()
@@ -21,6 +31,7 @@ MODEL_PATH = os.path.join(TEMP_DIR, MODEL_FILENAME)
 def download_model():
     """下载模型到临时目录"""
     if os.path.exists(MODEL_PATH):
+        logger.info(f"模型文件已存在: {MODEL_PATH}")
         return True
         
     try:
@@ -29,7 +40,7 @@ def download_model():
         
         model_url = "https://huggingface.co/TheBloke/TinyLlama-1.1B-Chat-v1.0-GGUF/resolve/main/tinyllama-1.1b-chat-v1.0.Q4_K_M.gguf"
         
-        print(f"开始下载模型到临时目录: {MODEL_PATH}")
+        logger.info(f"开始下载模型到临时目录: {MODEL_PATH}")
         response = requests.get(model_url, stream=True)
         total_size = int(response.headers.get('content-length', 0))
         
@@ -44,33 +55,42 @@ def download_model():
                 size = f.write(data)
                 pbar.update(size)
         
-        print("模型下载完成！")
+        logger.info("模型下载完成！")
         return True
     except Exception as e:
-        print(f"模型下载失败: {str(e)}")
+        logger.error(f"模型下载失败: {str(e)}")
         return False
 
 def get_model():
     """获取模型实例"""
-    if not os.path.exists(MODEL_PATH):
-        if not download_model():
-            return None
-            
-    return AutoModelForCausalLM.from_pretrained(
-        MODEL_PATH,
-        model_type="llama",
-        max_new_tokens=1024,
-        context_length=2048,
-        temperature=0.7
-    )
+    try:
+        if not os.path.exists(MODEL_PATH):
+            if not download_model():
+                logger.error("无法下载模型文件")
+                return None
+                
+        logger.info("正在加载模型...")
+        model = AutoModelForCausalLM.from_pretrained(
+            MODEL_PATH,
+            model_type="llama",
+            max_new_tokens=1024,
+            context_length=2048,
+            temperature=0.7
+        )
+        logger.info("模型加载成功！")
+        return model
+    except Exception as e:
+        logger.error(f"模型加载失败: {str(e)}")
+        return None
 
 def analyze_with_tinyllama(search_results):
     """使用TinyLlama分析搜索结果"""
-    model = get_model()
-    if model is None:
-        return "请先运行download_model.py下载模型文件"
-    
-    system_prompt = """你是一个专业的墨尔本房地产分析师，擅长分析房产市场趋势和提供投资建议。
+    try:
+        model = get_model()
+        if model is None:
+            return "模型加载失败，请稍后重试"
+        
+        system_prompt = """你是一个专业的墨尔本房地产分析师，擅长分析房产市场趋势和提供投资建议。
 请用专业且客观的中文回答，注重数据分析和市场洞察。
 在分析时，请特别关注：
 1. 价格趋势和市场周期
@@ -78,7 +98,7 @@ def analyze_with_tinyllama(search_results):
 3. 投资回报率
 4. 风险因素评估"""
 
-    prompt = f"""<|system|>{system_prompt}</s>
+        prompt = f"""<|system|>{system_prompt}</s>
 <|user|>请分析以下墨尔本房产信息，并提供一个详细的市场分析报告：
 
 搜索结果：{search_results}
@@ -108,10 +128,12 @@ def analyze_with_tinyllama(search_results):
    - 防范建议</s>
 <|assistant|>"""
 
-    try:
+        logger.info("开始生成分析报告...")
         response = model(prompt)
+        logger.info("分析报告生成完成")
         return response
     except Exception as e:
+        logger.error(f"分析过程中出现错误: {str(e)}")
         return f"分析过程中出现错误: {str(e)}"
 
 # 使用缓存装饰器，缓存12小时
@@ -126,20 +148,28 @@ def home():
 
 @app.route('/search', methods=['POST'])
 def search():
-    data = request.get_json()
-    suburb = data.get('suburb', '')
-    
-    if not suburb:
-        return jsonify({'error': '请输入区域名称或邮编'}), 400
-    
-    # 标准化输入
-    suburb = suburb.lower().strip()
-    if suburb == '3030':
-        suburb = 'point cook'
-    
     try:
+        data = request.get_json()
+        if data is None:
+            logger.error("无效的JSON数据")
+            return jsonify({'error': '请求格式错误'}), 400
+            
+        suburb = data.get('suburb', '')
+        
+        if not suburb:
+            logger.error("未提供区域名称")
+            return jsonify({'error': '请输入区域名称或邮编'}), 400
+        
+        # 标准化输入
+        suburb = suburb.lower().strip()
+        if suburb == '3030':
+            suburb = 'point cook'
+        
+        logger.info(f"搜索区域: {suburb}")
+        
         # 获取搜索结果
         results = search_engine.search_suburb(suburb)
+        logger.info("搜索完成，开始分析")
         
         # 使用缓存的分析结果
         timestamp = int(time.time() / (12 * 3600))  # 12小时更新一次
@@ -150,7 +180,18 @@ def search():
             'analysis': analysis
         })
     except Exception as e:
+        logger.error(f"处理请求时出错: {str(e)}")
         return jsonify({'error': str(e)}), 500
+
+@app.errorhandler(500)
+def internal_error(error):
+    logger.error(f"服务器内部错误: {error}")
+    return jsonify({'error': '服务器内部错误，请稍后重试'}), 500
+
+@app.errorhandler(404)
+def not_found_error(error):
+    logger.error(f"页面未找到: {error}")
+    return jsonify({'error': '请求的页面不存在'}), 404
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
