@@ -50,4 +50,11 @@ log/
 .python-version
 .pytest_cache/
 .coverage
-htmlcov/ 
+htmlcov/
+
+# 模型文件
+models/
+*.bin
+
+# 系统文件
+Thumbs.db 

@@ -31,8 +31,11 @@ function searchSuburb() {
             return;
         }
         
-        // 显示结果
-        displayResults(data);
+        // 显示GPT分析结果
+        displayGPTAnalysis(data.analysis);
+        
+        // 显示原始搜索结果
+        displayResults(data.raw_results);
     })
     .catch(error => {
         console.error('Error:', error);
@@ -45,6 +48,18 @@ function clearResults() {
     document.getElementById('infrastructure-results').innerHTML = '';
     document.getElementById('crime-results').innerHTML = '';
     document.getElementById('property-results').innerHTML = '';
+    document.getElementById('gpt-analysis').innerHTML = '';
+}
+
+function displayGPTAnalysis(analysis) {
+    const analysisHtml = `
+        <div class="analysis-content">
+            ${analysis.split('\n').map(paragraph => 
+                paragraph.trim() ? `<p class="mb-3">${paragraph}</p>` : ''
+            ).join('')}
+        </div>
+    `;
+    document.getElementById('gpt-analysis').innerHTML = analysisHtml;
 }
 
 function displayResults(data) {
