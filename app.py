@@ -5,6 +5,7 @@ from ctransformers import AutoModelForCausalLM
 from functools import lru_cache
 import time
 from dotenv import load_dotenv
+import tempfile
 
 # 加载环境变量
 load_dotenv()
@@ -12,13 +13,49 @@ load_dotenv()
 app = Flask(__name__)
 search_engine = PropertySearchEngine()
 
-# 模型路径
-MODEL_PATH = "models/tinyllama-1.1b-chat-v1.0.Q4_K_M.gguf"
+# 在临时目录中创建模型路径
+TEMP_DIR = tempfile.gettempdir()
+MODEL_FILENAME = "tinyllama-1.1b-chat-v1.0.Q4_K_M.gguf"
+MODEL_PATH = os.path.join(TEMP_DIR, MODEL_FILENAME)
+
+def download_model():
+    """下载模型到临时目录"""
+    if os.path.exists(MODEL_PATH):
+        return True
+        
+    try:
+        import requests
+        from tqdm import tqdm
+        
+        model_url = "https://huggingface.co/TheBloke/TinyLlama-1.1B-Chat-v1.0-GGUF/resolve/main/tinyllama-1.1b-chat-v1.0.Q4_K_M.gguf"
+        
+        print(f"开始下载模型到临时目录: {MODEL_PATH}")
+        response = requests.get(model_url, stream=True)
+        total_size = int(response.headers.get('content-length', 0))
+        
+        with open(MODEL_PATH, 'wb') as f, tqdm(
+            desc=MODEL_PATH,
+            total=total_size,
+            unit='iB',
+            unit_scale=True,
+            unit_divisor=1024,
+        ) as pbar:
+            for data in response.iter_content(chunk_size=1024):
+                size = f.write(data)
+                pbar.update(size)
+        
+        print("模型下载完成！")
+        return True
+    except Exception as e:
+        print(f"模型下载失败: {str(e)}")
+        return False
 
 def get_model():
     """获取模型实例"""
     if not os.path.exists(MODEL_PATH):
-        return None
+        if not download_model():
+            return None
+            
     return AutoModelForCausalLM.from_pretrained(
         MODEL_PATH,
         model_type="llama",
