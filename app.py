@@ -73,9 +73,12 @@ def get_model():
         model = AutoModelForCausalLM.from_pretrained(
             MODEL_PATH,
             model_type="llama",
-            max_new_tokens=1024,
-            context_length=2048,
-            temperature=0.7
+            max_new_tokens=512,  # 减少token数量
+            context_length=1024,  # 减少上下文长度
+            temperature=0.7,
+            gpu_layers=0,  # 禁用GPU
+            batch_size=1,  # 最小批处理大小
+            threads=2  # 限制线程数
         )
         logger.info("模型加载成功！")
         return model
