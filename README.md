@@ -20,7 +20,7 @@
 
 1. 克隆仓库：
 ```bash
-git clone https://github.com/yourusername/melbourne-property-search.git
+git clone https://github.com/Chriszhang6/melbourne-property-search.git
 cd melbourne-property-search
 ```
 
