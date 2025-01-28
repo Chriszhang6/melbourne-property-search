@@ -21,11 +21,11 @@ def download_file(url, filename):
             pbar.update(size)
 
 def main():
-    # GPT4All-J量化模型下载地址
-    model_url = "https://gpt4all.io/models/ggml-gpt4all-j-v1.3-groovy.bin"
-    model_path = "models/ggml-gpt4all-j-v1.3-groovy.bin"
+    # 使用最新的GPT4All-J中文模型
+    model_url = "https://huggingface.co/nomic-ai/gpt4all-13b-snoozy-q4_0/resolve/main/gpt4all-13b-snoozy-q4_0.ggmlv3.q4_0.bin"
+    model_path = "models/gpt4all-13b-snoozy-q4_0.ggmlv3.q4_0.bin"
     
-    print("开始下载GPT4All-J模型...")
+    print("开始下载GPT4All模型...")
     download_file(model_url, model_path)
     print("模型下载完成！")
 

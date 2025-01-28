@@ -11,7 +11,7 @@ app = Flask(__name__)
 search_engine = PropertySearchEngine()
 
 # 初始化模型
-MODEL_PATH = "models/ggml-gpt4all-j-v1.3-groovy.bin"
+MODEL_PATH = "models/gpt4all-13b-snoozy-q4_0.ggmlv3.q4_0.bin"
 model = None
 
 def load_model():
@@ -22,14 +22,16 @@ def load_model():
             os.makedirs(os.path.dirname(MODEL_PATH), exist_ok=True)
             print("请先运行download_model.py下载模型文件")
             
-        model = GPT4All(MODEL_PATH)
+        model = GPT4All(MODEL_PATH, model_type="llama2")
 
 def analyze_with_gpt4all(search_results):
-    """使用GPT4All-J分析搜索结果"""
+    """使用GPT4All分析搜索结果"""
     if model is None:
         load_model()
     
-    prompt = f"""作为一个专业的墨尔本房地产分析师，请分析以下墨尔本房产信息，并提供一个详细的市场分析报告：
+    system_prompt = "你是一个专业的墨尔本房地产分析师，擅长分析房产市场趋势和提供投资建议。请用专业且客观的中文回答。"
+    
+    prompt = f"""请分析以下墨尔本房产信息，并提供一个详细的市场分析报告：
 
 搜索结果：{search_results}
 
@@ -37,14 +39,21 @@ def analyze_with_gpt4all(search_results):
 1. 房产价格趋势
 2. 区域特点分析
 3. 投资建议
-4. 需要注意的风险
-
-请用中文回答，并保持专业性和客观性。"""
+4. 需要注意的风险"""
     
     try:
         # 使用流式生成获得更好的性能
         response = ""
-        for token in model.generate(prompt, max_tokens=512, temp=0.7, top_p=0.9, streaming=True):
+        for token in model.generate(
+            prompt=prompt,
+            max_tokens=1024,
+            temp=0.7,
+            top_p=0.9,
+            top_k=40,
+            repeat_penalty=1.1,
+            streaming=True,
+            system_prompt=system_prompt
+        ):
             response += token
             
         return response.strip()
@@ -72,7 +81,7 @@ def search():
         # 获取搜索结果
         results = search_engine.search_suburb(suburb)
         
-        # 使用GPT4All-J分析结果
+        # 使用GPT4All分析结果
         analysis = analyze_with_gpt4all(results)
         
         return jsonify({
