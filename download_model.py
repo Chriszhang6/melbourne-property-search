@@ -21,11 +21,11 @@ def download_file(url, filename):
             pbar.update(size)
 
 def main():
-    # TinyLlama GGML模型下载地址
-    model_url = "https://huggingface.co/TheBloke/TinyLlama-1.1B-Chat-v1.0-GGML/resolve/main/tinyllama-1.1b-chat-v1.0.ggmlv3.q4_0.bin"
-    model_path = "models/tinyllama-1.1b-chat-v1.0.ggmlv3.q4_0.bin"
+    # GPT4All-J量化模型下载地址
+    model_url = "https://gpt4all.io/models/ggml-gpt4all-j-v1.3-groovy.bin"
+    model_path = "models/ggml-gpt4all-j-v1.3-groovy.bin"
     
-    print("开始下载TinyLlama GGML模型...")
+    print("开始下载GPT4All-J模型...")
     download_file(model_url, model_path)
     print("模型下载完成！")
 
