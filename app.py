@@ -8,6 +8,7 @@ from dotenv import load_dotenv
 import tempfile
 import logging
 import sys
+import gc
 
 # 配置日志
 logging.basicConfig(
@@ -27,6 +28,9 @@ search_engine = PropertySearchEngine()
 TEMP_DIR = tempfile.gettempdir()
 MODEL_FILENAME = "tinyllama-1.1b-chat-v1.0.Q4_K_M.gguf"
 MODEL_PATH = os.path.join(TEMP_DIR, MODEL_FILENAME)
+
+# 全局模型实例
+_model = None
 
 def download_model():
     """下载模型到临时目录"""
@@ -62,28 +66,37 @@ def download_model():
         return False
 
 def get_model():
-    """获取模型实例"""
+    """获取模型实例（单例模式）"""
+    global _model
     try:
+        if _model is not None:
+            return _model
+            
         if not os.path.exists(MODEL_PATH):
             if not download_model():
                 logger.error("无法下载模型文件")
                 return None
                 
         logger.info("正在加载模型...")
-        model = AutoModelForCausalLM.from_pretrained(
+        # 强制垃圾回收
+        gc.collect()
+        
+        _model = AutoModelForCausalLM.from_pretrained(
             MODEL_PATH,
             model_type="llama",
-            max_new_tokens=512,  # 减少token数量
-            context_length=1024,  # 减少上下文长度
+            max_new_tokens=256,  # 进一步减少token数量
+            context_length=512,  # 进一步减少上下文长度
             temperature=0.7,
             gpu_layers=0,  # 禁用GPU
             batch_size=1,  # 最小批处理大小
-            threads=2  # 限制线程数
+            threads=1,  # 减少线程数
+            low_cpu_mem_usage=True  # 启用低内存模式
         )
         logger.info("模型加载成功！")
-        return model
+        return _model
     except Exception as e:
         logger.error(f"模型加载失败: {str(e)}")
+        _model = None
         return None
 
 def analyze_with_tinyllama(search_results):
@@ -93,47 +106,27 @@ def analyze_with_tinyllama(search_results):
         if model is None:
             return "模型加载失败，请稍后重试"
         
-        system_prompt = """你是一个专业的墨尔本房地产分析师，擅长分析房产市场趋势和提供投资建议。
-请用专业且客观的中文回答，注重数据分析和市场洞察。
-在分析时，请特别关注：
-1. 价格趋势和市场周期
-2. 区域发展潜力
-3. 投资回报率
-4. 风险因素评估"""
+        # 限制输入长度
+        max_input_length = 500
+        truncated_results = str(search_results)[:max_input_length] + "..."
+        
+        system_prompt = """你是一个专业的墨尔本房地产分析师。请简要分析以下房产信息：
+1. 价格趋势
+2. 区域特点
+3. 投资建议
+4. 风险提示"""
 
         prompt = f"""<|system|>{system_prompt}</s>
-<|user|>请分析以下墨尔本房产信息，并提供一个详细的市场分析报告：
-
-搜索结果：{search_results}
-
-请包含以下方面：
-1. 房产价格趋势：
-   - 近期价格变动
-   - 未来走势预测
-   - 与周边区域对比
-
-2. 区域特点分析：
-   - 交通便利性
-   - 教育资源
-   - 生活配套
-   - 发展规划
-
-3. 投资建议：
-   - 投资时机
-   - 预期回报
-   - 租金收益分析
-   - 最佳投资策略
-
-4. 风险提示：
-   - 市场风险
-   - 政策风险
-   - 特殊注意事项
-   - 防范建议</s>
+<|user|>分析结果：{truncated_results}</s>
 <|assistant|>"""
 
         logger.info("开始生成分析报告...")
         response = model(prompt)
         logger.info("分析报告生成完成")
+        
+        # 强制垃圾回收
+        gc.collect()
+        
         return response
     except Exception as e:
         logger.error(f"分析过程中出现错误: {str(e)}")
