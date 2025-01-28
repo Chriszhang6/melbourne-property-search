@@ -1,7 +1,7 @@
 from flask import Flask, render_template, request, jsonify
 from search_engine import PropertySearchEngine
 import os
-import requests
+from ctransformers import AutoModelForCausalLM
 from functools import lru_cache
 import time
 from dotenv import load_dotenv
@@ -12,16 +12,26 @@ load_dotenv()
 app = Flask(__name__)
 search_engine = PropertySearchEngine()
 
-# DeepSeek API配置
-DEEPSEEK_API_KEY = os.getenv('DEEPSEEK_API_KEY')
-DEEPSEEK_API_URL = "https://api.deepseek.com/v1/chat/completions"
+# 模型路径
+MODEL_PATH = "models/tinyllama-1.1b-chat-v1.0.Q4_K_M.gguf"
 
-def analyze_with_deepseek(search_results):
-    """使用DeepSeek分析搜索结果"""
-    headers = {
-        "Authorization": f"Bearer {DEEPSEEK_API_KEY}",
-        "Content-Type": "application/json"
-    }
+def get_model():
+    """获取模型实例"""
+    if not os.path.exists(MODEL_PATH):
+        return None
+    return AutoModelForCausalLM.from_pretrained(
+        MODEL_PATH,
+        model_type="llama",
+        max_new_tokens=1024,
+        context_length=2048,
+        temperature=0.7
+    )
+
+def analyze_with_tinyllama(search_results):
+    """使用TinyLlama分析搜索结果"""
+    model = get_model()
+    if model is None:
+        return "请先运行download_model.py下载模型文件"
     
     system_prompt = """你是一个专业的墨尔本房地产分析师，擅长分析房产市场趋势和提供投资建议。
 请用专业且客观的中文回答，注重数据分析和市场洞察。
@@ -31,7 +41,8 @@ def analyze_with_deepseek(search_results):
 3. 投资回报率
 4. 风险因素评估"""
 
-    prompt = f"""请分析以下墨尔本房产信息，并提供一个详细的市场分析报告：
+    prompt = f"""<|system|>{system_prompt}</s>
+<|user|>请分析以下墨尔本房产信息，并提供一个详细的市场分析报告：
 
 搜索结果：{search_results}
 
@@ -57,27 +68,12 @@ def analyze_with_deepseek(search_results):
    - 市场风险
    - 政策风险
    - 特殊注意事项
-   - 防范建议"""
+   - 防范建议</s>
+<|assistant|>"""
 
     try:
-        response = requests.post(
-            DEEPSEEK_API_URL,
-            headers=headers,
-            json={
-                "model": "deepseek-chat",
-                "messages": [
-                    {"role": "system", "content": system_prompt},
-                    {"role": "user", "content": prompt}
-                ],
-                "temperature": 0.7,
-                "max_tokens": 1500
-            }
-        )
-        
-        if response.status_code == 200:
-            return response.json()['choices'][0]['message']['content']
-        else:
-            return f"API请求失败: {response.status_code} - {response.text}"
+        response = model(prompt)
+        return response
     except Exception as e:
         return f"分析过程中出现错误: {str(e)}"
 
@@ -85,7 +81,7 @@ def analyze_with_deepseek(search_results):
 @lru_cache(maxsize=1000)
 def cached_analysis(suburb, timestamp):
     """缓存分析结果，每12小时更新一次"""
-    return analyze_with_deepseek(suburb)
+    return analyze_with_tinyllama(suburb)
 
 @app.route('/')
 def home():
