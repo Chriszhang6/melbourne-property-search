@@ -5,9 +5,39 @@ from typing import Dict, List
 import re
 import logging
 import time
-import random
+from collections import deque
+from threading import Lock
 
 logger = logging.getLogger(__name__)
+
+class RateLimiter:
+    def __init__(self, max_requests: int = 20, time_window: float = 1.0):
+        self.max_requests = max_requests
+        self.time_window = time_window
+        self.requests = deque()
+        self.lock = Lock()
+
+    def acquire(self):
+        """获取请求许可"""
+        with self.lock:
+            now = time.time()
+            
+            # 移除过期的请求记录
+            while self.requests and now - self.requests[0] >= self.time_window:
+                self.requests.popleft()
+            
+            # 如果当前请求数量达到限制，等待直到有空闲配额
+            if len(self.requests) >= self.max_requests:
+                sleep_time = self.requests[0] + self.time_window - now
+                if sleep_time > 0:
+                    time.sleep(sleep_time)
+                    now = time.time()
+                    # 重新清理过期请求
+                    while self.requests and now - self.requests[0] >= self.time_window:
+                        self.requests.popleft()
+            
+            # 记录新的请求时间
+            self.requests.append(now)
 
 class PropertySearchEngine:
     def __init__(self):
@@ -18,37 +48,54 @@ class PropertySearchEngine:
             'crime': ['crime', 'safety', 'police', 'incident', 'statistics'],
             'property': ['property', 'house', 'price', 'market', 'real estate', 'median']
         }
-        self.last_search_time = 0
-        self.min_delay = 3  # 最小延迟秒数
-    
-    def _wait_before_search(self):
-        """确保搜索之间有足够的延迟"""
-        current_time = time.time()
-        elapsed = current_time - self.last_search_time
-        if elapsed < self.min_delay:
-            time.sleep(self.min_delay - elapsed + random.uniform(0.1, 0.5))
-        self.last_search_time = time.time()
+        self.rate_limiter = RateLimiter(max_requests=18, time_window=1.0)  # 留一些余量
+        self.results_cache = {}
+        self.cache_ttl = 3600  # 缓存有效期1小时
+
+    def _get_cached_results(self, query: str) -> List[Dict]:
+        """获取缓存的搜索结果"""
+        if query in self.results_cache:
+            cache_time, results = self.results_cache[query]
+            if time.time() - cache_time < self.cache_ttl:
+                logger.info(f"使用缓存结果: {query}")
+                return results
+            else:
+                del self.results_cache[query]
+        return None
+
+    def _cache_results(self, query: str, results: List[Dict]):
+        """缓存搜索结果"""
+        self.results_cache[query] = (time.time(), results)
 
     def _safe_search(self, ddgs, query: str, max_results: int = 10, retries: int = 3) -> List[Dict]:
-        """安全的搜索函数，包含重试逻辑"""
+        """安全的搜索函数，包含重试逻辑和速率限制"""
+        # 首先检查缓存
+        cached_results = self._get_cached_results(query)
+        if cached_results is not None:
+            return cached_results
+
         for attempt in range(retries):
             try:
-                self._wait_before_search()
+                # 获取请求许可
+                self.rate_limiter.acquire()
+                
                 results = list(ddgs.text(query, max_results=max_results))
+                
+                # 缓存结果
+                self._cache_results(query, results)
                 return results
             except Exception as e:
                 logger.warning(f"搜索失败 (尝试 {attempt + 1}/{retries}): {str(e)}")
                 if attempt < retries - 1:
-                    time.sleep((attempt + 1) * 2)  # 递增等待时间
+                    time.sleep(1)  # 基础等待时间
                 else:
                     logger.error(f"搜索失败，已达到最大重试次数: {query}")
                     return []
-    
+
     def search_suburb(self, suburb: str) -> Dict:
         """执行综合搜索并返回结果"""
         logger.info(f"开始搜索区域: {suburb}")
         
-        # 合并查询以减少API调用
         combined_results = {
             'schools': [],
             'hospitals': [],
@@ -59,66 +106,54 @@ class PropertySearchEngine:
             'suburb': suburb
         }
         
+        search_queries = {
+            'schools': [
+                (f"{suburb} Melbourne public schools NAPLAN rankings", 10),
+                (f"{suburb} Melbourne private schools VCE results", 10),
+                (f"{suburb} Melbourne catholic schools facilities", 5)
+            ],
+            'hospitals': [
+                (f"{suburb} Melbourne hospitals medical centers", 10),
+                (f"{suburb} Melbourne healthcare facilities services", 10)
+            ],
+            'infrastructure': [
+                (f"{suburb} Melbourne infrastructure development budget", 10),
+                (f"{suburb} Melbourne council projects timeline", 10)
+            ],
+            'crime': [
+                (f"{suburb} Melbourne crime statistics reports", 10),
+                (f"{suburb} Melbourne safety police data", 10)
+            ],
+            'property': [
+                (f"{suburb} Melbourne property market analysis", 10),
+                (f"{suburb} Melbourne real estate prices trends", 10)
+            ]
+        }
+        
         with DDGS() as ddgs:
-            # 教育资源（合并查询）
-            education_query = f"{suburb} Melbourne schools education NAPLAN VCE public private catholic"
-            results = self._safe_search(ddgs, education_query, max_results=20)
-            for result in results:
-                if self._is_relevant('schools', result.get('body', '')):
-                    combined_results['schools'].append({
-                        'title': result.get('title', ''),
-                        'link': result.get('link', ''),
-                        'summary': result.get('body', '')[:800],
-                        'date': self._extract_date(result.get('body', ''))
-                    })
-            
-            # 医疗资源（合并查询）
-            health_query = f"{suburb} Melbourne hospitals medical centers clinics healthcare facilities"
-            results = self._safe_search(ddgs, health_query, max_results=20)
-            for result in results:
-                if self._is_relevant('hospitals', result.get('body', '')):
-                    combined_results['hospitals'].append({
-                        'title': result.get('title', ''),
-                        'link': result.get('link', ''),
-                        'summary': result.get('body', '')[:800],
-                        'date': self._extract_date(result.get('body', ''))
-                    })
-            
-            # 基础设施（合并查询）
-            infra_query = f"{suburb} Melbourne infrastructure development projects council budget"
-            results = self._safe_search(ddgs, infra_query, max_results=20)
-            for result in results:
-                if self._is_relevant('infrastructure', result.get('body', '')):
-                    combined_results['infrastructure'].append({
-                        'title': result.get('title', ''),
-                        'link': result.get('link', ''),
-                        'summary': result.get('body', '')[:800],
-                        'date': self._extract_date(result.get('body', ''))
-                    })
-            
-            # 治安状况（合并查询）
-            crime_query = f"{suburb} Melbourne crime statistics safety police reports"
-            results = self._safe_search(ddgs, crime_query, max_results=20)
-            for result in results:
-                if self._is_relevant('crime', result.get('body', '')):
-                    combined_results['crime'].append({
-                        'title': result.get('title', ''),
-                        'link': result.get('link', ''),
-                        'summary': result.get('body', '')[:800],
-                        'date': self._extract_date(result.get('body', ''))
-                    })
-            
-            # 房产市场（合并查询）
-            property_query = f"{suburb} Melbourne property market prices real estate trends"
-            results = self._safe_search(ddgs, property_query, max_results=20)
-            for result in results:
-                if self._is_relevant('property', result.get('body', '')):
-                    combined_results['property'].append({
-                        'title': result.get('title', ''),
-                        'link': result.get('link', ''),
-                        'summary': result.get('body', '')[:800],
-                        'date': self._extract_date(result.get('body', ''))
-                    })
+            for category, queries in search_queries.items():
+                for query, max_results in queries:
+                    results = self._safe_search(ddgs, query, max_results=max_results)
+                    for result in results:
+                        if self._is_relevant(category, result.get('body', '')):
+                            combined_results[category].append({
+                                'title': result.get('title', ''),
+                                'link': result.get('link', ''),
+                                'summary': result.get('body', '')[:800],
+                                'date': self._extract_date(result.get('body', ''))
+                            })
+        
+        # 对每个类别的结果进行去重和限制
+        for category in combined_results:
+            if isinstance(combined_results[category], list):
+                # 使用集合去重（基于链接）
+                seen_links = set()
+                unique_results = []
+                for result in combined_results[category]:
+                    if result['link'] not in seen_links:
+                        seen_links.add(result['link'])
+                        unique_results.append(result)
+                combined_results[category] = unique_results[:20]  # 限制每个类别最多20条结果
         
         logger.info(f"搜索完成，结果统计：")
         for category, results in combined_results.items():
