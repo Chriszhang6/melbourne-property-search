@@ -42,9 +42,11 @@ class PropertySearchEngine:
         results = []
         with DDGS() as ddgs:
             queries = [
-                f"{suburb} Melbourne best schools ranking reviews",
-                f"{suburb} Melbourne school performance NAPLAN",
-                f"{suburb} Melbourne primary secondary college education"
+                f"{suburb} Melbourne top public private schools ratings",
+                f"{suburb} Melbourne catholic independent schools facilities",
+                f"{suburb} Melbourne school NAPLAN VCE results achievements",
+                f"{suburb} Melbourne school enrollment capacity facilities",
+                f"{suburb} Melbourne kindergarten childcare centers"
             ]
             for query in queries:
                 logger.info(f"学校搜索词: {query}")
@@ -66,9 +68,11 @@ class PropertySearchEngine:
         results = []
         with DDGS() as ddgs:
             queries = [
-                f"{suburb} Melbourne hospitals medical centers",
-                f"{suburb} Melbourne healthcare facilities emergency",
-                f"{suburb} Melbourne medical services clinics"
+                f"{suburb} Melbourne hospital emergency department news",
+                f"{suburb} Melbourne medical center expansion development",
+                f"{suburb} Melbourne specialist clinic services updates",
+                f"{suburb} Melbourne healthcare facility investment",
+                f"{suburb} Melbourne hospital waiting times performance"
             ]
             for query in queries:
                 logger.info(f"医院搜索词: {query}")
@@ -90,9 +94,11 @@ class PropertySearchEngine:
         results = []
         with DDGS() as ddgs:
             queries = [
-                f"{suburb} Melbourne council development projects",
-                f"{suburb} Melbourne infrastructure upgrade funding",
-                f"{suburb} Melbourne community improvement plans"
+                f"{suburb} Melbourne infrastructure budget investment amount",
+                f"{suburb} Melbourne road transport upgrade cost timeline",
+                f"{suburb} Melbourne community facility construction budget",
+                f"{suburb} Melbourne council development spending details",
+                f"{suburb} Melbourne infrastructure project completion date"
             ]
             for query in queries:
                 logger.info(f"基建搜索词: {query}")
