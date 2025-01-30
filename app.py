@@ -28,15 +28,32 @@ search_engine = PropertySearchEngine()
 def analyze_with_openai(search_results):
     """使用OpenAI分析搜索结果"""
     try:
-        # 限制输入长度
         max_input_length = 2000
         truncated_results = str(search_results)[:max_input_length] + "..."
         
-        system_prompt = """你是一个专业的墨尔本房地产分析师。请简要分析以下房产信息：
-1. 价格趋势
-2. 区域特点
-3. 投资建议
-4. 风险提示"""
+        system_prompt = """你是一个专业的墨尔本房地产分析师。请对以下区域进行详细分析，分析以下几个方面：
+
+1. 教育资源分析：
+   - 列出该区域的主要学校（公立和私立）
+   - 学校的排名和评级
+   - 教学特色和优势
+   - 师资力量评估
+
+2. 医疗资源分析：
+   - 主要医疗机构
+   - 医院规模和等级
+   - 专科特色
+   - 急诊服务情况
+   - 社区医疗设施
+
+3. 治安状况分析：
+   - 总体犯罪率水平
+   - 主要犯罪类型统计
+   - 近年治安趋势
+   - 警力配置情况
+   - 社区安全措施
+
+请基于搜索结果提供具体的数据和事实支持。如果某些信息缺失，请说明"暂无相关数据"。"""
 
         logger.info("开始生成分析报告...")
         response = openai.chat.completions.create(
@@ -46,7 +63,7 @@ def analyze_with_openai(search_results):
                 {"role": "user", "content": f"分析结果：{truncated_results}"}
             ],
             temperature=0.7,
-            max_tokens=500,
+            max_tokens=800,
             top_p=0.9
         )
         
