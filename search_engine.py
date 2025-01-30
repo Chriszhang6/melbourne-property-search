@@ -10,15 +10,19 @@ logger = logging.getLogger(__name__)
 class PropertySearchEngine:
     def __init__(self):
         self.categories = {
-            'infrastructure': ['development', 'projects', 'infrastructure', 'railway', 'school', 'hospital', 'road'],
-            'crime': ['crime', 'safety', 'security', 'incident', 'police'],
-            'property': ['property', 'house', 'price', 'market', 'real estate']
+            'schools': ['school', 'education', 'college', 'primary', 'secondary', 'ranking', 'performance'],
+            'hospitals': ['hospital', 'medical', 'healthcare', 'clinic', 'emergency'],
+            'infrastructure': ['development', 'council', 'infrastructure', 'community', 'upgrade', 'project', 'funding'],
+            'crime': ['crime', 'safety', 'police', 'incident', 'statistics'],
+            'property': ['property', 'house', 'price', 'market', 'real estate', 'median']
         }
     
     def search_suburb(self, suburb: str) -> Dict:
         """执行综合搜索并返回结果"""
         logger.info(f"开始搜索区域: {suburb}")
         results = {
+            'schools': self._search_schools(suburb),
+            'hospitals': self._search_hospitals(suburb),
             'infrastructure': self._search_infrastructure(suburb),
             'crime': self._search_crime_stats(suburb),
             'property': self._search_property_trends(suburb),
@@ -26,89 +30,147 @@ class PropertySearchEngine:
             'suburb': suburb
         }
         logger.info(f"搜索完成，结果统计：")
-        logger.info(f"- 基础设施相关: {len(results['infrastructure'])} 条")
+        logger.info(f"- 学校相关: {len(results['schools'])} 条")
+        logger.info(f"- 医院相关: {len(results['hospitals'])} 条")
+        logger.info(f"- 基建相关: {len(results['infrastructure'])} 条")
         logger.info(f"- 治安相关: {len(results['crime'])} 条")
         logger.info(f"- 房产相关: {len(results['property'])} 条")
         return results
     
-    def _search_infrastructure(self, suburb: str) -> List[Dict]:
-        """搜索基础设施发展项目"""
+    def _search_schools(self, suburb: str) -> List[Dict]:
+        """搜索该区域的学校信息"""
         results = []
         with DDGS() as ddgs:
-            query = f"{suburb} Melbourne schools education ranking performance"
-            logger.info(f"基础设施搜索词: {query}")
-            search_results = list(ddgs.text(query, max_results=10))
-            logger.info(f"基础设施原始结果数: {len(search_results)}")
-            
-            for result in search_results:
-                if self._is_relevant_infrastructure(result.get('body', '')):
-                    results.append({
-                        'title': result.get('title', ''),
-                        'link': result.get('link', ''),
-                        'summary': result.get('body', '')[:500] + '...',
-                        'date': self._extract_date(result.get('body', ''))
-                    })
-            logger.info(f"基础设施过滤后结果数: {len(results)}")
-        return results
+            queries = [
+                f"{suburb} Melbourne best schools ranking reviews",
+                f"{suburb} Melbourne school performance NAPLAN",
+                f"{suburb} Melbourne primary secondary college education"
+            ]
+            for query in queries:
+                logger.info(f"学校搜索词: {query}")
+                search_results = list(ddgs.text(query, max_results=10))
+                logger.info(f"获取到 {len(search_results)} 条结果")
+                
+                for result in search_results:
+                    if self._is_relevant('schools', result.get('body', '')):
+                        results.append({
+                            'title': result.get('title', ''),
+                            'link': result.get('link', ''),
+                            'summary': result.get('body', '')[:800],
+                            'date': self._extract_date(result.get('body', ''))
+                        })
+        return results[:30]  # 限制最多30条结果
+    
+    def _search_hospitals(self, suburb: str) -> List[Dict]:
+        """搜索该区域的医疗设施"""
+        results = []
+        with DDGS() as ddgs:
+            queries = [
+                f"{suburb} Melbourne hospitals medical centers",
+                f"{suburb} Melbourne healthcare facilities emergency",
+                f"{suburb} Melbourne medical services clinics"
+            ]
+            for query in queries:
+                logger.info(f"医院搜索词: {query}")
+                search_results = list(ddgs.text(query, max_results=10))
+                logger.info(f"获取到 {len(search_results)} 条结果")
+                
+                for result in search_results:
+                    if self._is_relevant('hospitals', result.get('body', '')):
+                        results.append({
+                            'title': result.get('title', ''),
+                            'link': result.get('link', ''),
+                            'summary': result.get('body', '')[:800],
+                            'date': self._extract_date(result.get('body', ''))
+                        })
+        return results[:30]
+    
+    def _search_infrastructure(self, suburb: str) -> List[Dict]:
+        """搜索该区域的基础设施发展"""
+        results = []
+        with DDGS() as ddgs:
+            queries = [
+                f"{suburb} Melbourne council development projects",
+                f"{suburb} Melbourne infrastructure upgrade funding",
+                f"{suburb} Melbourne community improvement plans"
+            ]
+            for query in queries:
+                logger.info(f"基建搜索词: {query}")
+                search_results = list(ddgs.text(query, max_results=10))
+                logger.info(f"获取到 {len(search_results)} 条结果")
+                
+                for result in search_results:
+                    if self._is_relevant('infrastructure', result.get('body', '')):
+                        results.append({
+                            'title': result.get('title', ''),
+                            'link': result.get('link', ''),
+                            'summary': result.get('body', '')[:800],
+                            'date': self._extract_date(result.get('body', ''))
+                        })
+        return results[:30]
     
     def _search_crime_stats(self, suburb: str) -> List[Dict]:
-        """搜索犯罪率统计"""
+        """搜索该区域的犯罪统计"""
         results = []
         with DDGS() as ddgs:
-            query = f"{suburb} Melbourne crime statistics police report safety data"
-            logger.info(f"治安搜索词: {query}")
-            search_results = list(ddgs.text(query, max_results=10))
-            logger.info(f"治安原始结果数: {len(search_results)}")
-            
-            for result in search_results:
-                if self._is_relevant_crime(result.get('body', '')):
-                    results.append({
-                        'title': result.get('title', ''),
-                        'link': result.get('link', ''),
-                        'summary': result.get('body', '')[:500] + '...',
-                        'date': self._extract_date(result.get('body', ''))
-                    })
-            logger.info(f"治安过滤后结果数: {len(results)}")
-        return results
+            queries = [
+                f"{suburb} Melbourne crime rate statistics",
+                f"{suburb} Melbourne police reports incidents",
+                f"{suburb} Melbourne safety data analysis"
+            ]
+            for query in queries:
+                logger.info(f"治安搜索词: {query}")
+                search_results = list(ddgs.text(query, max_results=10))
+                logger.info(f"获取到 {len(search_results)} 条结果")
+                
+                for result in search_results:
+                    if self._is_relevant('crime', result.get('body', '')):
+                        results.append({
+                            'title': result.get('title', ''),
+                            'link': result.get('link', ''),
+                            'summary': result.get('body', '')[:800],
+                            'date': self._extract_date(result.get('body', ''))
+                        })
+        return results[:30]
     
     def _search_property_trends(self, suburb: str) -> List[Dict]:
-        """搜索房价走势"""
+        """搜索该区域的房产市场信息"""
         results = []
         with DDGS() as ddgs:
-            query = f"{suburb} Melbourne hospital medical centre healthcare facilities"
-            logger.info(f"医疗搜索词: {query}")
-            search_results = list(ddgs.text(query, max_results=10))
-            logger.info(f"医疗原始结果数: {len(search_results)}")
-            
-            for result in search_results:
-                if self._is_relevant_property(result.get('body', '')):
-                    results.append({
-                        'title': result.get('title', ''),
-                        'link': result.get('link', ''),
-                        'summary': result.get('body', '')[:500] + '...',
-                        'date': self._extract_date(result.get('body', ''))
-                    })
-            logger.info(f"医疗过滤后结果数: {len(results)}")
-        return results
+            queries = [
+                f"{suburb} Melbourne property price trends",
+                f"{suburb} Melbourne real estate market analysis",
+                f"{suburb} Melbourne house median price data"
+            ]
+            for query in queries:
+                logger.info(f"房产搜索词: {query}")
+                search_results = list(ddgs.text(query, max_results=10))
+                logger.info(f"获取到 {len(search_results)} 条结果")
+                
+                for result in search_results:
+                    if self._is_relevant('property', result.get('body', '')):
+                        results.append({
+                            'title': result.get('title', ''),
+                            'link': result.get('link', ''),
+                            'summary': result.get('body', '')[:800],
+                            'date': self._extract_date(result.get('body', ''))
+                        })
+        return results[:30]
     
-    def _is_relevant_infrastructure(self, text: str) -> bool:
-        """检查是否为相关的基础设施信息"""
-        keywords = self.categories['infrastructure']
-        return any(keyword.lower() in text.lower() for keyword in keywords)
-    
-    def _is_relevant_crime(self, text: str) -> bool:
-        """检查是否为相关的犯罪统计信息"""
-        keywords = self.categories['crime']
-        return any(keyword.lower() in text.lower() for keyword in keywords)
-    
-    def _is_relevant_property(self, text: str) -> bool:
-        """检查是否为相关的房产信息"""
-        keywords = self.categories['property']
+    def _is_relevant(self, category: str, text: str) -> bool:
+        """检查文本是否与指定类别相关"""
+        keywords = self.categories[category]
         return any(keyword.lower() in text.lower() for keyword in keywords)
     
     def _extract_date(self, text: str) -> str:
         """从文本中提取日期"""
-        # 简单的日期提取示例
-        date_pattern = r'\d{4}[-/]\d{1,2}[-/]\d{1,2}'
-        match = re.search(date_pattern, text)
-        return match.group(0) if match else '' 
+        date_patterns = [
+            r'\d{4}[-/]\d{1,2}[-/]\d{1,2}',  # YYYY-MM-DD
+            r'\d{1,2}[-/]\d{1,2}[-/]\d{4}',  # DD-MM-YYYY
+            r'\d{4}'  # YYYY
+        ]
+        for pattern in date_patterns:
+            match = re.search(pattern, text)
+            if match:
+                return match.group(0)
+        return '' 
