@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, jsonify
+from flask import Flask, render_template, request, jsonify, make_response
 from search_engine import PropertySearchEngine
 import os
 import openai
@@ -7,6 +7,7 @@ import time
 from dotenv import load_dotenv
 import logging
 import sys
+import traceback
 
 # 配置日志
 logging.basicConfig(
@@ -75,21 +76,28 @@ def analyze_with_openai(search_results):
 最后，请在分析报告末尾添加"参考来源"部分，列出所有引用的链接。"""
 
         logger.info("开始生成分析报告...")
-        response = openai.chat.completions.create(
-            model="gpt-3.5-turbo",
-            messages=[
-                {"role": "system", "content": system_prompt},
-                {"role": "user", "content": f"这是搜索结果，请仔细分析其中的英文内容并用中文总结：{truncated_results}"}
-            ],
-            temperature=0.7,
-            max_tokens=2000,  # 增加token数以获取更详细的分析
-            top_p=0.9
-        )
-        
-        logger.info("分析报告生成完成")
-        return response.choices[0].message.content
+        try:
+            response = openai.chat.completions.create(
+                model="gpt-3.5-turbo",
+                messages=[
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user", "content": f"这是搜索结果，请仔细分析其中的英文内容并用中文总结：{truncated_results}"}
+                ],
+                temperature=0.7,
+                max_tokens=2000,
+                top_p=0.9,
+                request_timeout=30  # 设置30秒超时
+            )
+            logger.info("分析报告生成完成")
+            return response.choices[0].message.content
+        except openai.APITimeoutError:
+            logger.error("OpenAI API 请求超时")
+            return "分析生成超时，请重试"
+        except openai.APIError as e:
+            logger.error(f"OpenAI API 错误: {str(e)}")
+            return f"分析生成出错: {str(e)}"
     except Exception as e:
-        logger.error(f"分析过程中出现错误: {str(e)}")
+        logger.error(f"分析过程中出现错误: {str(e)}\n{traceback.format_exc()}")
         return f"分析过程中出现错误: {str(e)}"
 
 # 使用缓存装饰器，缓存12小时
@@ -105,16 +113,20 @@ def home():
 @app.route('/search', methods=['POST'])
 def search():
     try:
+        if not request.is_json:
+            logger.error("请求Content-Type不是application/json")
+            return make_response(jsonify({'error': '请求必须是JSON格式'}), 400)
+
         data = request.get_json()
         if data is None:
             logger.error("无效的JSON数据")
-            return jsonify({'error': '请求格式错误'}), 400
+            return make_response(jsonify({'error': '请求格式错误'}), 400)
             
         suburb = data.get('suburb', '')
         
         if not suburb:
             logger.error("未提供区域名称")
-            return jsonify({'error': '请输入区域名称或邮编'}), 400
+            return make_response(jsonify({'error': '请输入区域名称或邮编'}), 400)
         
         # 标准化输入
         suburb = suburb.lower().strip()
@@ -123,21 +135,28 @@ def search():
         
         logger.info(f"搜索区域: {suburb}")
         
-        # 获取搜索结果
-        results = search_engine.search_suburb(suburb)
-        logger.info("搜索完成，开始分析")
-        
-        # 使用缓存的分析结果
-        timestamp = int(time.time() / (12 * 3600))  # 12小时更新一次
-        analysis = cached_analysis(str(results), timestamp)
-        
-        return jsonify({
-            'raw_results': results,
-            'analysis': analysis
-        })
+        try:
+            # 获取搜索结果
+            results = search_engine.search_suburb(suburb)
+            logger.info("搜索完成，开始分析")
+            
+            # 使用缓存的分析结果
+            timestamp = int(time.time() / (12 * 3600))  # 12小时更新一次
+            analysis = cached_analysis(str(results), timestamp)
+            
+            response = {
+                'raw_results': results,
+                'analysis': analysis
+            }
+            
+            return make_response(jsonify(response), 200)
+        except Exception as e:
+            logger.error(f"搜索或分析过程出错: {str(e)}\n{traceback.format_exc()}")
+            return make_response(jsonify({'error': f'搜索过程中出现错误: {str(e)}'}), 500)
+            
     except Exception as e:
-        logger.error(f"处理请求时出错: {str(e)}")
-        return jsonify({'error': str(e)}), 500
+        logger.error(f"处理请求时出错: {str(e)}\n{traceback.format_exc()}")
+        return make_response(jsonify({'error': str(e)}), 500)
 
 @app.route('/test_api', methods=['GET'])
 def test_api():
@@ -148,29 +167,35 @@ def test_api():
             messages=[
                 {"role": "user", "content": "Hello, this is a test."}
             ],
-            max_tokens=10
+            max_tokens=10,
+            request_timeout=10
         )
-        return jsonify({
+        return make_response(jsonify({
             'status': 'success',
             'message': 'API连接正常',
             'response': response.choices[0].message.content
-        })
+        }), 200)
     except Exception as e:
-        logger.error(f"API测试失败: {str(e)}")
-        return jsonify({
+        logger.error(f"API测试失败: {str(e)}\n{traceback.format_exc()}")
+        return make_response(jsonify({
             'status': 'error',
             'message': f'API连接失败: {str(e)}'
-        }), 500
+        }), 500)
 
 @app.errorhandler(500)
 def internal_error(error):
-    logger.error(f"服务器内部错误: {error}")
-    return jsonify({'error': '服务器内部错误，请稍后重试'}), 500
+    logger.error(f"服务器内部错误: {error}\n{traceback.format_exc()}")
+    return make_response(jsonify({'error': '服务器内部错误，请稍后重试'}), 500)
 
 @app.errorhandler(404)
 def not_found_error(error):
     logger.error(f"页面未找到: {error}")
-    return jsonify({'error': '请求的页面不存在'}), 404
+    return make_response(jsonify({'error': '请求的页面不存在'}), 404)
+
+@app.errorhandler(Exception)
+def handle_exception(error):
+    logger.error(f"未捕获的异常: {error}\n{traceback.format_exc()}")
+    return make_response(jsonify({'error': '服务器发生错误，请稍后重试'}), 500)
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
