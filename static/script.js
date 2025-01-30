@@ -54,50 +54,57 @@ function clearResults() {
 function displayResults(data) {
     // 显示教育资源信息
     const infrastructureHtml = data.infrastructure.map(item => `
-        <li class="result-item">
-            <h4>${item.title}</h4>
-            <p>${item.summary}</p>
-            <div class="result-meta">
-                ${item.date ? `<span class="date">发布日期: ${item.date}</span>` : ''}
-                ${item.link ? `<a href="${item.link}" target="_blank" class="more-link">查看详情 →</a>` : ''}
-            </div>
+        <li>
+            <a href="${item.link}" target="_blank" title="${item.title}">
+                ${item.title}
+            </a>
+            ${item.date ? `<span class="date">(${item.date})</span>` : ''}
         </li>
     `).join('');
     document.getElementById('infrastructure-results').innerHTML = infrastructureHtml || '<li>暂无相关信息</li>';
 
     // 显示医疗资源信息
     const crimeHtml = data.crime.map(item => `
-        <li class="result-item">
-            <h4>${item.title}</h4>
-            <p>${item.summary}</p>
-            <div class="result-meta">
-                ${item.date ? `<span class="date">发布日期: ${item.date}</span>` : ''}
-                ${item.link ? `<a href="${item.link}" target="_blank" class="more-link">查看详情 →</a>` : ''}
-            </div>
+        <li>
+            <a href="${item.link}" target="_blank" title="${item.title}">
+                ${item.title}
+            </a>
+            ${item.date ? `<span class="date">(${item.date})</span>` : ''}
         </li>
     `).join('');
     document.getElementById('crime-results').innerHTML = crimeHtml || '<li>暂无相关信息</li>';
 
     // 显示治安状况信息
     const propertyHtml = data.property.map(item => `
-        <li class="result-item">
-            <h4>${item.title}</h4>
-            <p>${item.summary}</p>
-            <div class="result-meta">
-                ${item.date ? `<span class="date">发布日期: ${item.date}</span>` : ''}
-                ${item.link ? `<a href="${item.link}" target="_blank" class="more-link">查看详情 →</a>` : ''}
-            </div>
+        <li>
+            <a href="${item.link}" target="_blank" title="${item.title}">
+                ${item.title}
+            </a>
+            ${item.date ? `<span class="date">(${item.date})</span>` : ''}
         </li>
     `).join('');
     document.getElementById('property-results').innerHTML = propertyHtml || '<li>暂无相关信息</li>';
 }
 
 function displayGPTAnalysis(analysis) {
+    // 将分析结果中的链接转换为HTML链接
+    const processedAnalysis = analysis.replace(/\[(.*?)\]\((https?:\/\/[^\s\)]+)\)/g, '<a href="$2" target="_blank">$1</a>');
+    
     const analysisHtml = `
         <div class="analysis-content">
-            ${analysis.split('\n').map(paragraph => 
-                paragraph.trim() ? `<p>${paragraph}</p>` : ''
-            ).join('')}
+            ${processedAnalysis.split('\n').map(paragraph => {
+                if (paragraph.trim().startsWith('#')) {
+                    // 处理标题
+                    return `<h3>${paragraph.replace(/^#+\s+/, '')}</h3>`;
+                } else if (paragraph.trim().startsWith('-')) {
+                    // 处理列表项
+                    return `<ul><li>${paragraph.replace(/^-\s+/, '')}</li></ul>`;
+                } else if (paragraph.trim()) {
+                    // 处理普通段落
+                    return `<p>${paragraph}</p>`;
+                }
+                return '';
+            }).join('')}
         </div>
     `;
     document.getElementById('gpt-analysis').innerHTML = analysisHtml;

@@ -200,4 +200,64 @@ body {
 .btn-primary:hover {
     background-color: #2980b9;
     border-color: #2980b9;
+}
+
+.references-section {
+    margin-top: 2rem;
+    font-size: 0.9rem;
+}
+
+.references-section h4 {
+    font-size: 1rem;
+    color: var(--text-color);
+    margin-top: 1.5rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.reference-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.reference-list li {
+    padding: 0.5rem 0;
+    font-size: 0.85rem;
+    line-height: 1.4;
+}
+
+.reference-list a {
+    color: var(--primary-color);
+    text-decoration: none;
+    transition: all 0.2s ease;
+}
+
+.reference-list a:hover {
+    color: #1d4ed8;
+    text-decoration: underline;
+}
+
+.analysis-content {
+    line-height: 1.8;
+}
+
+.analysis-content h3 {
+    font-size: 1.2rem;
+    font-weight: 600;
+    margin: 1.5rem 0 1rem;
+    color: var(--text-color);
+}
+
+.analysis-content p {
+    margin-bottom: 1rem;
+}
+
+.analysis-content ul {
+    padding-left: 1.5rem;
+    margin-bottom: 1rem;
+}
+
+.analysis-content li {
+    margin-bottom: 0.5rem;
 } 
