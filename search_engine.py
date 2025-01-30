@@ -42,15 +42,26 @@ class RateLimiter:
 class PropertySearchEngine:
     def __init__(self):
         self.categories = {
-            'schools': ['school', 'education', 'college', 'primary', 'secondary', 'ranking', 'performance'],
+            'schools': [
+                # 学校类型关键词
+                'school', 'college', 'grammar', 'primary', 'secondary', 'P-12',
+                # 教育体系关键词
+                'public school', 'private school', 'catholic', 'independent', 'christian',
+                # 课程关键词
+                'VCE', 'NAPLAN', 'IB', 'curriculum', 'STEM',
+                # 设施关键词
+                'campus', 'facilities', 'sports',
+                # 成就关键词
+                'ranking', 'performance', 'achievement', 'results'
+            ],
             'hospitals': ['hospital', 'medical', 'healthcare', 'clinic', 'emergency'],
             'infrastructure': ['development', 'council', 'infrastructure', 'community', 'upgrade', 'project', 'funding'],
             'crime': ['crime', 'safety', 'police', 'incident', 'statistics'],
             'property': ['property', 'house', 'price', 'market', 'real estate', 'median']
         }
-        self.rate_limiter = RateLimiter(max_requests=18, time_window=1.0)  # 留一些余量
+        self.rate_limiter = RateLimiter(max_requests=18, time_window=1.0)
         self.results_cache = {}
-        self.cache_ttl = 3600  # 缓存有效期1小时
+        self.cache_ttl = 3600
 
     def _get_cached_results(self, query: str) -> List[Dict]:
         """获取缓存的搜索结果"""
@@ -108,9 +119,30 @@ class PropertySearchEngine:
         
         search_queries = {
             'schools': [
-                (f"{suburb} Melbourne public schools NAPLAN rankings", 10),
-                (f"{suburb} Melbourne private schools VCE results", 10),
-                (f"{suburb} Melbourne catholic schools facilities", 5)
+                # 公立学校搜索
+                (f"site:education.vic.gov.au {suburb} Melbourne public school", 10),
+                (f"site:myschool.edu.au {suburb} Melbourne government school", 10),
+                (f"{suburb} Melbourne state school NAPLAN results", 5),
+                
+                # 私立学校搜索
+                (f"site:independentschools.vic.edu.au {suburb} Melbourne private school", 10),
+                (f"{suburb} Melbourne independent school fees facilities", 10),
+                (f"{suburb} Melbourne grammar school IB VCE", 5),
+                
+                # 教会学校搜索
+                (f"site:cecv.catholic.edu.au {suburb} Melbourne catholic school", 10),
+                (f"{suburb} Melbourne christian college", 5),
+                (f"{suburb} Melbourne religious school education", 5),
+                
+                # 特色项目和成就
+                (f"{suburb} Melbourne school STEM program", 5),
+                (f"{suburb} Melbourne school sports excellence", 5),
+                (f"{suburb} Melbourne school academic achievement", 5),
+                
+                # 教育资源
+                (f"{suburb} Melbourne education centre library", 5),
+                (f"{suburb} Melbourne community learning hub", 5),
+                (f"site:wyndham.vic.gov.au {suburb} education facilities", 5)
             ],
             'hospitals': [
                 (f"{suburb} Melbourne hospitals medical centers", 10),
@@ -136,24 +168,34 @@ class PropertySearchEngine:
                     results = self._safe_search(ddgs, query, max_results=max_results)
                     for result in results:
                         if self._is_relevant(category, result.get('body', '')):
-                            combined_results[category].append({
-                                'title': result.get('title', ''),
-                                'link': result.get('link', ''),
-                                'summary': result.get('body', '')[:800],
-                                'date': self._extract_date(result.get('body', ''))
-                            })
+                            # 对于学校类别，添加学校类型标签
+                            if category == 'schools':
+                                school_type = self._determine_school_type(result.get('title', ''), result.get('body', ''))
+                                combined_results[category].append({
+                                    'title': result.get('title', ''),
+                                    'link': result.get('link', ''),
+                                    'summary': result.get('body', '')[:800],
+                                    'date': self._extract_date(result.get('body', '')),
+                                    'school_type': school_type
+                                })
+                            else:
+                                combined_results[category].append({
+                                    'title': result.get('title', ''),
+                                    'link': result.get('link', ''),
+                                    'summary': result.get('body', '')[:800],
+                                    'date': self._extract_date(result.get('body', ''))
+                                })
         
         # 对每个类别的结果进行去重和限制
         for category in combined_results:
             if isinstance(combined_results[category], list):
-                # 使用集合去重（基于链接）
                 seen_links = set()
                 unique_results = []
                 for result in combined_results[category]:
                     if result['link'] not in seen_links:
                         seen_links.add(result['link'])
                         unique_results.append(result)
-                combined_results[category] = unique_results[:20]  # 限制每个类别最多20条结果
+                combined_results[category] = unique_results[:30]  # 增加学校类别的结果数量
         
         logger.info(f"搜索完成，结果统计：")
         for category, results in combined_results.items():
@@ -162,10 +204,42 @@ class PropertySearchEngine:
         
         return combined_results
 
+    def _determine_school_type(self, title: str, body: str) -> str:
+        """确定学校类型"""
+        text = (title + ' ' + body).lower()
+        
+        # 检查是否为公立学校
+        if any(keyword in text for keyword in ['public school', 'state school', 'government school']):
+            return 'public'
+        
+        # 检查是否为私立学校
+        if any(keyword in text for keyword in ['private school', 'independent school', 'grammar school']):
+            return 'private'
+        
+        # 检查是否为教会学校
+        if any(keyword in text for keyword in ['catholic', 'christian', 'religious']):
+            return 'religious'
+        
+        # 如果无法确定，返回未知
+        return 'unknown'
+
     def _is_relevant(self, category: str, text: str) -> bool:
         """检查文本是否与指定类别相关"""
         keywords = self.categories[category]
         text_lower = text.lower()
+        
+        # 对于学校类别，增加额外的相关性检查
+        if category == 'schools':
+            # 检查是否包含学校相关的关键短语
+            school_phrases = [
+                'education', 'learning', 'teaching',
+                'students', 'pupils', 'teachers',
+                'classroom', 'academic', 'enrollment',
+                'curriculum', 'school year', 'term'
+            ]
+            return (any(keyword.lower() in text_lower for keyword in keywords) or
+                    any(phrase in text_lower for phrase in school_phrases))
+        
         return any(keyword.lower() in text_lower for keyword in keywords)
     
     def _extract_date(self, text: str) -> str:
