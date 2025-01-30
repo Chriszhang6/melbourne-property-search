@@ -35,7 +35,7 @@ class PropertySearchEngine:
         """搜索基础设施发展项目"""
         results = []
         with DDGS() as ddgs:
-            query = f"{suburb} Melbourne infrastructure development projects past 10 years"
+            query = f"{suburb} Melbourne schools education ranking performance"
             logger.info(f"基础设施搜索词: {query}")
             search_results = list(ddgs.text(query, max_results=10))
             logger.info(f"基础设施原始结果数: {len(search_results)}")
@@ -45,7 +45,7 @@ class PropertySearchEngine:
                     results.append({
                         'title': result.get('title', ''),
                         'link': result.get('link', ''),
-                        'summary': result.get('body', '')[:200] + '...',
+                        'summary': result.get('body', '')[:500] + '...',
                         'date': self._extract_date(result.get('body', ''))
                     })
             logger.info(f"基础设施过滤后结果数: {len(results)}")
@@ -55,7 +55,7 @@ class PropertySearchEngine:
         """搜索犯罪率统计"""
         results = []
         with DDGS() as ddgs:
-            query = f"{suburb} Melbourne crime rate statistics safety past 10 years"
+            query = f"{suburb} Melbourne crime statistics police report safety data"
             logger.info(f"治安搜索词: {query}")
             search_results = list(ddgs.text(query, max_results=10))
             logger.info(f"治安原始结果数: {len(search_results)}")
@@ -65,7 +65,7 @@ class PropertySearchEngine:
                     results.append({
                         'title': result.get('title', ''),
                         'link': result.get('link', ''),
-                        'summary': result.get('body', '')[:200] + '...',
+                        'summary': result.get('body', '')[:500] + '...',
                         'date': self._extract_date(result.get('body', ''))
                     })
             logger.info(f"治安过滤后结果数: {len(results)}")
@@ -75,20 +75,20 @@ class PropertySearchEngine:
         """搜索房价走势"""
         results = []
         with DDGS() as ddgs:
-            query = f"{suburb} Melbourne property price trends market analysis past 10 years"
-            logger.info(f"房产搜索词: {query}")
+            query = f"{suburb} Melbourne hospital medical centre healthcare facilities"
+            logger.info(f"医疗搜索词: {query}")
             search_results = list(ddgs.text(query, max_results=10))
-            logger.info(f"房产原始结果数: {len(search_results)}")
+            logger.info(f"医疗原始结果数: {len(search_results)}")
             
             for result in search_results:
                 if self._is_relevant_property(result.get('body', '')):
                     results.append({
                         'title': result.get('title', ''),
                         'link': result.get('link', ''),
-                        'summary': result.get('body', '')[:200] + '...',
+                        'summary': result.get('body', '')[:500] + '...',
                         'date': self._extract_date(result.get('body', ''))
                     })
-            logger.info(f"房产过滤后结果数: {len(results)}")
+            logger.info(f"医疗过滤后结果数: {len(results)}")
         return results
     
     def _is_relevant_infrastructure(self, text: str) -> bool:
