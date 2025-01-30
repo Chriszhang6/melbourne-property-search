@@ -17,6 +17,10 @@ logger = logging.getLogger(__name__)
 # 加载环境变量
 load_dotenv()
 
+# 设置代理环境变量（如果需要）
+if os.getenv('HTTPS_PROXY'):
+    os.environ['OPENAI_PROXY'] = os.getenv('HTTPS_PROXY')
+
 app = Flask(__name__)
 
 def search_suburb_info(suburb_name):
@@ -46,7 +50,10 @@ def generate_suburb_analysis(suburb_name, timestamp):
         search_results = search_suburb_info(suburb_name)
         
         # 创建 OpenAI 客户端
-        client = openai.OpenAI()
+        client = openai.OpenAI(
+            api_key=os.getenv('OPENAI_API_KEY'),
+            base_url="https://api.openai.com/v1"
+        )
         
         # 构建系统提示信息
         system_prompt = """你是一个专业的澳大利亚房地产分析师，擅长分析墨尔本房地产市场。
