@@ -51,50 +51,56 @@ function clearResults() {
     document.getElementById('gpt-analysis').innerHTML = '';
 }
 
+function displayResults(data) {
+    // 显示教育资源信息
+    const infrastructureHtml = data.infrastructure.map(item => `
+        <li class="result-item">
+            <h4>${item.title}</h4>
+            <p>${item.summary}</p>
+            <div class="result-meta">
+                ${item.date ? `<span class="date">发布日期: ${item.date}</span>` : ''}
+                ${item.link ? `<a href="${item.link}" target="_blank" class="more-link">查看详情 →</a>` : ''}
+            </div>
+        </li>
+    `).join('');
+    document.getElementById('infrastructure-results').innerHTML = infrastructureHtml || '<li>暂无相关信息</li>';
+
+    // 显示医疗资源信息
+    const crimeHtml = data.crime.map(item => `
+        <li class="result-item">
+            <h4>${item.title}</h4>
+            <p>${item.summary}</p>
+            <div class="result-meta">
+                ${item.date ? `<span class="date">发布日期: ${item.date}</span>` : ''}
+                ${item.link ? `<a href="${item.link}" target="_blank" class="more-link">查看详情 →</a>` : ''}
+            </div>
+        </li>
+    `).join('');
+    document.getElementById('crime-results').innerHTML = crimeHtml || '<li>暂无相关信息</li>';
+
+    // 显示治安状况信息
+    const propertyHtml = data.property.map(item => `
+        <li class="result-item">
+            <h4>${item.title}</h4>
+            <p>${item.summary}</p>
+            <div class="result-meta">
+                ${item.date ? `<span class="date">发布日期: ${item.date}</span>` : ''}
+                ${item.link ? `<a href="${item.link}" target="_blank" class="more-link">查看详情 →</a>` : ''}
+            </div>
+        </li>
+    `).join('');
+    document.getElementById('property-results').innerHTML = propertyHtml || '<li>暂无相关信息</li>';
+}
+
 function displayGPTAnalysis(analysis) {
     const analysisHtml = `
         <div class="analysis-content">
             ${analysis.split('\n').map(paragraph => 
-                paragraph.trim() ? `<p class="mb-3">${paragraph}</p>` : ''
+                paragraph.trim() ? `<p>${paragraph}</p>` : ''
             ).join('')}
         </div>
     `;
     document.getElementById('gpt-analysis').innerHTML = analysisHtml;
-}
-
-function displayResults(data) {
-    // 显示基础设施信息
-    const infrastructureHtml = data.infrastructure.map(item => `
-        <div class="result-item mb-3">
-            <h6>${item.title}</h6>
-            <p class="mb-1">${item.summary}</p>
-            ${item.date ? `<small class="text-muted">日期: ${item.date}</small>` : ''}
-            ${item.link ? `<br><a href="${item.link}" target="_blank" class="small">查看详情</a>` : ''}
-        </div>
-    `).join('');
-    document.getElementById('infrastructure-results').innerHTML = infrastructureHtml || '未找到相关信息';
-
-    // 显示犯罪率统计
-    const crimeHtml = data.crime.map(item => `
-        <div class="result-item mb-3">
-            <h6>${item.title}</h6>
-            <p class="mb-1">${item.summary}</p>
-            ${item.date ? `<small class="text-muted">日期: ${item.date}</small>` : ''}
-            ${item.link ? `<br><a href="${item.link}" target="_blank" class="small">查看详情</a>` : ''}
-        </div>
-    `).join('');
-    document.getElementById('crime-results').innerHTML = crimeHtml || '未找到相关信息';
-
-    // 显示房价走势
-    const propertyHtml = data.property.map(item => `
-        <div class="result-item mb-3">
-            <h6>${item.title}</h6>
-            <p class="mb-1">${item.summary}</p>
-            ${item.date ? `<small class="text-muted">日期: ${item.date}</small>` : ''}
-            ${item.link ? `<br><a href="${item.link}" target="_blank" class="small">查看详情</a>` : ''}
-        </div>
-    `).join('');
-    document.getElementById('property-results').innerHTML = propertyHtml || '未找到相关信息';
 }
 
 // 添加回车键搜索功能
