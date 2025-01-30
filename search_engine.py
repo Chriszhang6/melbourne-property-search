@@ -119,6 +119,16 @@ class PropertySearchEngine:
         
         search_queries = {
             'schools': [
+                # Point Cook 特定学校搜索
+                (f"Point Cook College STEM facilities programs", 10),
+                (f"Saltwater P-9 College environmental education", 10),
+                (f"Featherbrook P-9 College personalized learning", 10),
+                (f"Werribee Secondary College VCE VCAL", 10),
+                (f"Westbourne Grammar School IB VCE ranking", 10),
+                (f"Ave Maria College arts leadership", 10),
+                (f"Stella Maris Catholic Primary School", 10),
+                (f"Thomas Carr College VCE results Tarneit", 10),
+                
                 # 公立学校搜索
                 (f"site:education.vic.gov.au {suburb} Melbourne public school", 10),
                 (f"site:myschool.edu.au {suburb} Melbourne government school", 10),
@@ -140,8 +150,11 @@ class PropertySearchEngine:
                 (f"{suburb} Melbourne school academic achievement", 5),
                 
                 # 教育资源
-                (f"{suburb} Melbourne education centre library", 5),
-                (f"{suburb} Melbourne community learning hub", 5),
+                (f"Wyndham science centre education programs", 5),
+                (f"Sanctuary Lakes sports facilities", 5),
+                (f"Bayside arts training {suburb}", 5),
+                (f"{suburb} Melbourne community learning centre", 5),
+                (f"{suburb} Melbourne library tutoring programs", 5),
                 (f"site:wyndham.vic.gov.au {suburb} education facilities", 5)
             ],
             'hospitals': [
