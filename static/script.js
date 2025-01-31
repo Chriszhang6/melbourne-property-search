@@ -60,7 +60,7 @@ document.addEventListener('DOMContentLoaded', function() {
     function showLoading() {
         loadingContainer.style.display = 'flex';
         loadingContainer.innerHTML = `
-            <div class="loading-content">
+            <div class="loading-content" style="width: 100%; text-align: center;">
                 <div class="spinner"></div>
                 <p>正在生成专业分析报告，请稍候...</p>
             </div>
