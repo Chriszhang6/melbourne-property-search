@@ -53,6 +53,13 @@ def analyze_with_openai(suburb):
     try:
         start_time = time.time()
         
+        # 检查 API key 是否存在
+        if not client.api_key:
+            logger.error("OpenAI API key未设置")
+            raise ValueError("OpenAI API key未设置")
+            
+        logger.info(f"开始调用OpenAI API分析{suburb}区域...")
+        
         system_prompt = """你是一个专业的澳大利亚房地产分析师。请针对用户提供的区域，提供详细的购房因素分析报告。
 
 分析要求：
@@ -258,28 +265,41 @@ def analyze_with_openai(suburb):
 - 政府规划：Wyndham City Council
 """
 
-        logger.info("开始生成分析报告...")
-        
         # 调用OpenAI API
-        response = client.chat.completions.create(
-            model="gpt-3.5-turbo",
-            messages=[
-                {"role": "system", "content": system_prompt},
-                {"role": "user", "content": f"请分析{suburb}区域的购房因素"}
-            ],
-            temperature=0.2,  # 降低创造性，提高稳定性
-            max_tokens=2000,
-            top_p=0.8
-        )
-        
-        # 记录API调用时间和token使用情况
-        end_time = time.time()
-        logger.info(f"分析报告生成完成，用时: {end_time - start_time:.2f}秒，使用tokens: {response.usage.total_tokens}")
-        
-        return response.choices[0].message.content
+        try:
+            response = client.chat.completions.create(
+                model="gpt-3.5-turbo",
+                messages=[
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user", "content": f"请分析{suburb}区域的购房因素"}
+                ],
+                temperature=0.2,
+                max_tokens=2000,
+                top_p=0.8
+            )
+            
+            # 检查响应是否有效
+            if not response or not response.choices or not response.choices[0].message:
+                logger.error("OpenAI返回了无效的响应")
+                raise ValueError("无法生成分析报告")
+                
+            analysis_text = response.choices[0].message.content
+            if not analysis_text:
+                logger.error("OpenAI返回了空的分析内容")
+                raise ValueError("生成的分析报告为空")
+            
+            # 记录成功信息
+            end_time = time.time()
+            logger.info(f"分析报告生成完成，用时: {end_time - start_time:.2f}秒")
+            
+            return analysis_text
+            
+        except Exception as api_error:
+            logger.error(f"OpenAI API调用失败: {str(api_error)}")
+            raise Exception(f"OpenAI API调用失败: {str(api_error)}")
         
     except Exception as e:
-        logger.error(f"OpenAI API调用失败: {str(e)}")
+        logger.error(f"生成分析报告时出错: {str(e)}")
         raise Exception("生成分析报告时出错，请稍后重试")
 
 @app.route('/')
@@ -302,18 +322,28 @@ def search():
         
         # 使用新的标准化函数处理输入
         suburb = standardize_suburb(suburb)
-        logger.info(f"分析区域: {suburb}")
+        logger.info(f"开始分析区域: {suburb}")
         
-        # 直接使用OpenAI分析
-        analysis = analyze_with_openai(suburb)
-        
-        return jsonify({
-            'analysis': analysis,
-            'disclaimer': '注意：本报告中的数据仅供参考，具体信息请以官方发布为准。'
-        })
+        try:
+            # 直接使用OpenAI分析
+            analysis = analyze_with_openai(suburb)
+            
+            if not analysis:
+                logger.error("生成的分析报告为空")
+                return jsonify({'error': '生成分析报告失败，请重试'}), 500
+            
+            return jsonify({
+                'analysis': analysis,
+                'disclaimer': '注意：本报告中的数据仅供参考，具体信息请以官方发布为准。'
+            })
+            
+        except Exception as api_error:
+            logger.error(f"OpenAI API调用失败: {str(api_error)}")
+            return jsonify({'error': '生成分析报告时出错，请稍后重试'}), 500
+            
     except Exception as e:
         logger.error(f"处理请求时出错: {str(e)}")
-        return jsonify({'error': str(e)}), 500
+        return jsonify({'error': '服务器内部错误，请稍后重试'}), 500
 
 @app.route('/test_api', methods=['GET'])
 def test_api():
