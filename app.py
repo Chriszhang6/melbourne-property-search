@@ -151,6 +151,12 @@ def analyze_with_openai(suburb):
         end_time = time.time()
         logger.info(f"分析报告生成完成，用时: {end_time - start_time:.2f}秒，使用tokens: {response.usage.total_tokens}")
         
+        # 跟踪API使用量
+        input_tokens = response.usage.prompt_tokens
+        output_tokens = response.usage.completion_tokens
+        cost = usage_tracker.track_request(input_tokens, output_tokens, suburb)
+        logger.info(f"API调用成本: ${cost:.4f}")
+        
         return response.choices[0].message.content
         
     except Exception as e:
