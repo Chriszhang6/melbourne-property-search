@@ -187,30 +187,155 @@ body {
     line-height: 1.5;
     color: var(--text-color);
     letter-spacing: 0.01em;
-    overflow-wrap: break-word;  /* 添加自动换行 */
-    word-wrap: break-word;      /* 兼容性支持 */
-    word-break: break-word;     /* 确保长单词也能换行 */
+    overflow-wrap: break-word;
+    word-wrap: break-word;
+    word-break: break-word;
+    max-width: 100%;
+    box-sizing: border-box;
+}
+
+.report-content > * {
+    max-width: 100%;
+    margin-bottom: 1rem;
 }
 
 .report-content p {
     margin: 0.5rem 0;
     text-align: left;
     padding: 0;
-    max-width: 100%;           /* 限制最大宽度 */
-    overflow-wrap: break-word; /* 添加自动换行 */
+    max-width: 100%;
+    overflow-wrap: break-word;
+    white-space: pre-wrap;
+}
+
+/* 表格容器样式 */
+.table-container {
+    width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    margin: 1rem 0;
+}
+
+/* 表格样式 */
+.comparison-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 1rem 0;
+    font-size: 0.9rem;
+}
+
+.comparison-table th,
+.comparison-table td {
+    padding: 0.8rem;
+    border: 1px solid var(--border-color);
+    text-align: left;
+    min-width: 120px;
+}
+
+.comparison-table th {
+    background: rgba(14, 165, 233, 0.05);
+    font-weight: 600;
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+    .report-content {
+        padding: 1rem;
+    }
+
+    .comparison-table {
+        font-size: 0.85rem;
+    }
+
+    .comparison-table th,
+    .comparison-table td {
+        padding: 0.6rem;
+        min-width: 100px;
+    }
+}
+
+@media (max-width: 480px) {
+    .report-content {
+        padding: 0.8rem;
+        font-size: 0.85rem;
+    }
+
+    .report-header {
+        padding: 1rem;
+    }
+
+    .report-header h2 {
+        font-size: 1.4rem;
+    }
+
+    .comparison-table {
+        font-size: 0.8rem;
+    }
+
+    .comparison-table th,
+    .comparison-table td {
+        padding: 0.5rem;
+        min-width: 80px;
+    }
+
+    /* 确保在小屏幕上的间距 */
+    .report-content > * {
+        margin-bottom: 0.8rem;
+    }
+}
+
+/* 确保所有内容都能完整显示 */
+.report-summary,
+.advantages,
+.disadvantages,
+.suggestions,
+.references {
+    width: 100%;
+    box-sizing: border-box;
+    margin: 1rem 0;
+    padding: 1rem;
+    border-radius: 8px;
+    overflow-wrap: break-word;
+    word-wrap: break-word;
+    word-break: break-word;
+}
+
+/* 列表样式优化 */
+.report-content ul {
+    margin: 0.5rem 0;
+    padding-left: 1.2rem;
+    list-style-position: outside;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.report-content li {
+    margin-bottom: 0.3rem;
+    line-height: 1.5;
+    text-align: left;
+    overflow-wrap: break-word;
+    word-wrap: break-word;
+    word-break: break-word;
 }
 
 .report-summary {
     background: #f8fafc;
     padding: 1.5rem;
     border-radius: 8px;
-    margin-bottom: 2rem;
+    margin: 1.5rem 0;
+    border-left: 4px solid var(--primary-color);
 }
 
 .report-summary h3 {
     font-size: 1.2rem;
     font-weight: 600;
     margin: 0 0 1rem;
+    color: var(--primary-color);
+}
+
+.report-summary p {
+    margin: 0;
+    line-height: 1.6;
 }
 
 /* 分析内容样式 */
@@ -239,46 +364,6 @@ body {
     margin: 1rem 0 0.6rem;
     padding: 0;
     text-align: left;
-}
-
-/* 列表样式 */
-.report-content ul {
-    margin: 0.5rem 0;
-    padding-left: 1.2rem;
-    text-align: left;
-}
-
-.report-content li {
-    margin-bottom: 0.3rem;
-    line-height: 1.5;
-    text-align: left;
-}
-
-/* 表格样式 */
-.comparison-table {
-    width: 100%;
-    min-width: 300px; /* 设置最小宽度 */
-    overflow-x: auto;
-    display: block;
-    margin: 1rem 0;
-    border-collapse: separate;
-    border-spacing: 0;
-    font-size: 0.9rem;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-}
-
-.comparison-table th {
-    background: rgba(14, 165, 233, 0.05);
-    font-weight: 600;
-    text-align: left;
-    padding: 0.8rem;
-    border: 1px solid var(--border-color);
-}
-
-.comparison-table td {
-    padding: 0.8rem;
-    border: 1px solid var(--border-color);
-    line-height: 1.5;
 }
 
 /* 页脚样式 */
@@ -358,9 +443,22 @@ body {
         margin: 0.4rem 0;
     }
     
-    .advantages, .disadvantages {
-        padding: 0.6rem;
-        margin: 0.8rem 0;
+    .report-summary,
+    .suggestions,
+    .references,
+    .advantages,
+    .disadvantages {
+        padding: 1rem;
+        margin: 1rem 0;
+    }
+    
+    .report-summary h3,
+    .suggestions h3,
+    .references h3,
+    .advantages h4,
+    .disadvantages h4 {
+        font-size: 1.1rem;
+        margin: 0 0 0.8rem;
     }
     
     /* 确保在小屏幕上文字不会溢出 */
@@ -485,4 +583,46 @@ body {
 .api-usage span {
     color: #333;
     font-weight: 500;
+}
+
+/* 建议部分样式 */
+.suggestions {
+    background: #f0fdf4;
+    padding: 1.5rem;
+    border-radius: 8px;
+    margin: 1.5rem 0;
+    border-left: 4px solid #22c55e;
+}
+
+.suggestions h3 {
+    font-size: 1.2rem;
+    font-weight: 600;
+    margin: 0 0 1rem;
+    color: #22c55e;
+}
+
+.suggestions p {
+    margin: 0;
+    line-height: 1.6;
+}
+
+/* 参考资料部分样式 */
+.references {
+    background: #f8fafc;
+    padding: 1.5rem;
+    border-radius: 8px;
+    margin: 1.5rem 0;
+    border-left: 4px solid #6366f1;
+}
+
+.references h3 {
+    font-size: 1.2rem;
+    font-weight: 600;
+    margin: 0 0 1rem;
+    color: #6366f1;
+}
+
+.references p {
+    margin: 0;
+    line-height: 1.6;
 } 
