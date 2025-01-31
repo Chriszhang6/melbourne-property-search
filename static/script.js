@@ -115,24 +115,32 @@ document.addEventListener('DOMContentLoaded', function() {
             .map(line => {
                 const trimmedLine = line.trim();
                 
-                // 处理二级标题（x.x格式）- 把这个判断提前，避免被一级标题的规则捕获
-                if (/^\d+\.\d+\s+/.test(trimmedLine)) {
-                    const [prefix, ...rest] = trimmedLine.split(' ');
-                    const titleText = rest.join(' ');
-                    return `<h3 class="secondary-title"><strong>${prefix}</strong> ${titleText}</h3>`;
-                }
-                
                 // 处理一级标题
                 if (/^\d+\.\s+/.test(trimmedLine)) {
                     return `<h2 class="primary-title">${trimmedLine}</h2>`;
                 }
                 
-                // 处理特殊的一级标题（总结和建议）
-                if (trimmedLine.startsWith('总结：')) {
+                // 处理特殊的一级标题（总结、建议、参考来源）
+                if (trimmedLine === '总结') {
                     return `<h2 class="primary-title">5. ${trimmedLine}</h2>`;
                 }
-                if (trimmedLine === '建议：') {
+                if (trimmedLine === '建议') {
                     return `<h2 class="primary-title">6. ${trimmedLine}</h2>`;
+                }
+                if (trimmedLine === '参考来源') {
+                    return `<h2 class="primary-title">7. ${trimmedLine}</h2>`;
+                }
+                
+                // 处理二级标题
+                const secondaryTitles = [
+                    '关键项目与拨款', '未来规划',
+                    '公立学校', '私立学校', '教会学校', '短板',
+                    '公立医院', '私立医疗机构',
+                    '增长数据', '增长推动因素', '风险提示'
+                ];
+                
+                if (secondaryTitles.includes(trimmedLine)) {
+                    return `<h3 class="secondary-title">${trimmedLine}</h3>`;
                 }
 
                 // 处理表格
