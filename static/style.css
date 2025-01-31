@@ -219,8 +219,18 @@ body {
     font-weight: 600;
     color: var(--text-color);
     margin: 2rem 0 1rem;
-    padding-bottom: 0.5rem;
-    border-bottom: 1px solid var(--border-color);
+    padding: 0.8rem 1rem;
+    border-left: 4px solid var(--secondary-color);
+    background: linear-gradient(to right, rgba(255, 0, 128, 0.05), transparent);
+    border-radius: 0 8px 8px 0;
+}
+
+.secondary-title strong {
+    background: linear-gradient(120deg, var(--primary-color), var(--secondary-color));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    text-fill-color: transparent;
 }
 
 .analysis-content h3 {
