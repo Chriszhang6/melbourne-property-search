@@ -7,6 +7,8 @@ import re
 from dotenv import load_dotenv
 import logging
 import sys
+from datetime import datetime, timedelta
+import json
 
 # 配置日志
 logging.basicConfig(
@@ -27,6 +29,78 @@ if not api_key:
 
 # 配置OpenAI API
 client = OpenAI(api_key=api_key)
+
+# API使用量跟踪
+MONTHLY_BUDGET = 5.0  # 每月预算（美元）
+COST_PER_1K_INPUT_TOKENS = 0.0015  # GPT-3.5-turbo 输入价格
+COST_PER_1K_OUTPUT_TOKENS = 0.002   # GPT-3.5-turbo 输出价格
+
+class APIUsageTracker:
+    def __init__(self, budget_limit=MONTHLY_BUDGET):
+        self.budget_limit = budget_limit
+        self.usage_file = 'api_usage.json'
+        self.load_usage()
+
+    def load_usage(self):
+        try:
+            if os.path.exists(self.usage_file):
+                with open(self.usage_file, 'r') as f:
+                    self.usage_data = json.load(f)
+            else:
+                self.usage_data = {
+                    'current_month': datetime.now().strftime('%Y-%m'),
+                    'total_cost': 0.0,
+                    'requests': []
+                }
+        except Exception as e:
+            logger.error(f"加载使用量数据失败: {str(e)}")
+            self.usage_data = {
+                'current_month': datetime.now().strftime('%Y-%m'),
+                'total_cost': 0.0,
+                'requests': []
+            }
+
+    def save_usage(self):
+        try:
+            with open(self.usage_file, 'w') as f:
+                json.dump(self.usage_data, f, indent=2)
+        except Exception as e:
+            logger.error(f"保存使用量数据失败: {str(e)}")
+
+    def calculate_cost(self, input_tokens, output_tokens):
+        input_cost = (input_tokens / 1000) * COST_PER_1K_INPUT_TOKENS
+        output_cost = (output_tokens / 1000) * COST_PER_1K_OUTPUT_TOKENS
+        return input_cost + output_cost
+
+    def check_and_update_month(self):
+        current_month = datetime.now().strftime('%Y-%m')
+        if self.usage_data['current_month'] != current_month:
+            self.usage_data = {
+                'current_month': current_month,
+                'total_cost': 0.0,
+                'requests': []
+            }
+            self.save_usage()
+
+    def can_make_request(self):
+        self.check_and_update_month()
+        return self.usage_data['total_cost'] < self.budget_limit
+
+    def track_request(self, input_tokens, output_tokens, suburb):
+        cost = self.calculate_cost(input_tokens, output_tokens)
+        self.usage_data['total_cost'] += cost
+        self.usage_data['requests'].append({
+            'timestamp': datetime.now().isoformat(),
+            'suburb': suburb,
+            'input_tokens': input_tokens,
+            'output_tokens': output_tokens,
+            'cost': cost
+        })
+        self.save_usage()
+        return cost
+
+# 创建API使用量跟踪器
+usage_tracker = APIUsageTracker()
 
 app = Flask(__name__)
 # 确保JSON输出中文不被转义
@@ -295,6 +369,11 @@ def home():
 @app.route('/search', methods=['POST'])
 def search():
     try:
+        # 检查是否超出预算
+        if not usage_tracker.can_make_request():
+            logger.error("已达到本月API使用限额")
+            return jsonify({'error': '已达到本月使用限额，请下月再试'}), 429
+
         data = request.get_json()
         if data is None:
             logger.error("无效的JSON数据")
@@ -306,22 +385,38 @@ def search():
             logger.error("未提供区域名称")
             return jsonify({'error': '请输入区域名称或邮编'}), 400
         
-        # 使用新的标准化函数处理输入
         suburb = standardize_suburb(suburb)
         logger.info(f"开始分析区域: {suburb}")
         
         try:
-            # 直接使用OpenAI分析
-            analysis = analyze_with_openai(suburb)
-            if not analysis:
-                logger.error("OpenAI返回空响应")
+            response = client.chat.completions.create(
+                model="gpt-3.5-turbo",
+                messages=[
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user", "content": f"请分析{suburb}区域的购房因素"}
+                ],
+                temperature=0.2,
+                max_tokens=2000,
+                top_p=0.8
+            )
+            
+            # 跟踪API使用量
+            input_tokens = response.usage.prompt_tokens
+            output_tokens = response.usage.completion_tokens
+            cost = usage_tracker.track_request(input_tokens, output_tokens, suburb)
+            
+            logger.info(f"API调用成功，成本: ${cost:.4f}")
+            
+            if not response.choices or not response.choices[0].message:
+                logger.error("OpenAI返回了无效的响应")
                 return jsonify({'error': '生成分析报告失败，请重试'}), 500
-                
-            logger.info(f"成功生成{suburb}的分析报告")
+            
+            analysis = response.choices[0].message.content
             return jsonify({
                 'analysis': analysis,
                 'disclaimer': '注意：本报告中的数据仅供参考，具体信息请以官方发布为准。'
             })
+            
         except Exception as api_error:
             logger.error(f"OpenAI API调用失败: {str(api_error)}")
             return jsonify({'error': '生成分析报告时出错，请稍后重试'}), 500
@@ -353,6 +448,20 @@ def test_api():
             'status': 'error',
             'message': f'API连接失败: {str(e)}'
         }), 500
+
+@app.route('/usage', methods=['GET'])
+def get_usage():
+    """获取API使用情况"""
+    try:
+        return jsonify({
+            'current_month': usage_tracker.usage_data['current_month'],
+            'total_cost': round(usage_tracker.usage_data['total_cost'], 4),
+            'budget_limit': MONTHLY_BUDGET,
+            'remaining_budget': round(MONTHLY_BUDGET - usage_tracker.usage_data['total_cost'], 4)
+        })
+    except Exception as e:
+        logger.error(f"获取使用情况失败: {str(e)}")
+        return jsonify({'error': '获取使用情况失败'}), 500
 
 @app.errorhandler(500)
 def internal_error(error):
