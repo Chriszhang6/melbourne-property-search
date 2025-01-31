@@ -159,90 +159,170 @@ document.addEventListener('DOMContentLoaded', function() {
             return '<p>暂无分析内容</p>';
         }
 
+        let sections = {
+            summary: '',
+            advantages: '',
+            disadvantages: '',
+            suggestions: '',
+            references: '',
+            content: []
+        };
+
+        let currentSection = 'content';
+        let tableContent = [];
+        let listContent = [];
+
         // 将换行符转换为HTML段落
-        let formattedText = analysis
-            .toString()  // 确保输入是字符串
-            .split('\n')
-            .filter(line => line.trim() !== '')
-            .map(line => {
-                const trimmedLine = line.trim();
-                
-                // 处理一级标题 (#)，确保标题前没有多余的空格
-                if (trimmedLine.match(/^#\s+/)) {
-                    const titleText = trimmedLine.replace(/^#\s+/, '').trim();
-                    return `<h2 class="primary-title">${titleText}</h2>\n\n`;  // 添加两个换行
-                }
-                
-                // 处理二级标题 (##)，确保标题前没有多余的空格
-                if (trimmedLine.match(/^##\s+/)) {
-                    const titleText = trimmedLine.replace(/^##\s+/, '').trim();
-                    return `<h3 class="secondary-title">${titleText}</h3>\n\n`;  // 添加两个换行
-                }
+        analysis.toString().split('\n').forEach(line => {
+            const trimmedLine = line.trim();
+            if (!trimmedLine) return;
 
-                // 处理总结部分的优势和劣势
-                if (trimmedLine.startsWith('优势：')) {
-                    return `<div class="advantages"><h4>优势：</h4><ul>${formatList(trimmedLine.substring(3))}</ul></div>\n\n`;
-                }
-                if (trimmedLine.startsWith('劣势：')) {
-                    return `<div class="disadvantages"><h4>劣势：</h4><ul>${formatList(trimmedLine.substring(3))}</ul></div>\n\n`;
-                }
+            // 处理总结部分
+            if (trimmedLine.startsWith('总结：')) {
+                sections.summary = `<div class="report-summary">
+                    <h3>总结</h3>
+                    <p>${trimmedLine.substring(3)}</p>
+                </div>`;
+                return;
+            }
 
-                // 处理表格
-                if (trimmedLine.includes('|')) {
-                    return formatTable(trimmedLine) + '\n';
-                }
+            // 处理优势
+            if (trimmedLine.startsWith('优势：')) {
+                sections.advantages = `<div class="advantages">
+                    <h4>优势</h4>
+                    <ul>${formatList(trimmedLine.substring(3))}</ul>
+                </div>`;
+                return;
+            }
 
-                // 处理列表
-                if (trimmedLine.startsWith('- ')) {
-                    return `<li>${trimmedLine.substring(2)}</li>\n`;
-                }
-                if (trimmedLine.match(/^[a-zA-Z\u4e00-\u9fa5]\d*\./)) {
-                    return `<li>${trimmedLine.substring(trimmedLine.indexOf('.') + 1).trim()}</li>\n`;
-                }
+            // 处理劣势
+            if (trimmedLine.startsWith('劣势：')) {
+                sections.disadvantages = `<div class="disadvantages">
+                    <h4>劣势</h4>
+                    <ul>${formatList(trimmedLine.substring(3))}</ul>
+                </div>`;
+                return;
+            }
 
-                // 普通段落
-                return `<p>${trimmedLine}</p>\n\n`;  // 添加两个换行
-            })
-            .join('');  // 不再需要额外的换行，因为我们在每个元素后都添加了换行
+            // 处理建议部分
+            if (trimmedLine.startsWith('建议：')) {
+                sections.suggestions = `<div class="suggestions">
+                    <h3>建议</h3>
+                    <p>${trimmedLine.substring(3)}</p>
+                </div>`;
+                return;
+            }
 
-        // 将连续的li元素包装在ul中
-        formattedText = formattedText.replace(/<li>.*?<\/li>(?:\s*<li>.*?<\/li>)+/g, match => {
-            return `<ul>${match}</ul>\n\n`;  // 为列表添加额外的间距
+            // 处理参考资料部分
+            if (trimmedLine.startsWith('参考资料：')) {
+                sections.references = `<div class="references">
+                    <h3>参考资料</h3>
+                    <p>${trimmedLine.substring(5)}</p>
+                </div>`;
+                return;
+            }
+
+            // 处理一级标题
+            if (trimmedLine.match(/^#\s+/)) {
+                if (tableContent.length > 0) {
+                    sections.content.push(formatTableComplete(tableContent));
+                    tableContent = [];
+                }
+                if (listContent.length > 0) {
+                    sections.content.push(`<ul>${listContent.join('')}</ul>`);
+                    listContent = [];
+                }
+                sections.content.push(`<h2 class="primary-title">${trimmedLine.replace(/^#\s+/, '').trim()}</h2>`);
+                return;
+            }
+
+            // 处理二级标题
+            if (trimmedLine.match(/^##\s+/)) {
+                if (tableContent.length > 0) {
+                    sections.content.push(formatTableComplete(tableContent));
+                    tableContent = [];
+                }
+                if (listContent.length > 0) {
+                    sections.content.push(`<ul>${listContent.join('')}</ul>`);
+                    listContent = [];
+                }
+                sections.content.push(`<h3 class="secondary-title">${trimmedLine.replace(/^##\s+/, '').trim()}</h3>`);
+                return;
+            }
+
+            // 处理表格
+            if (trimmedLine.includes('|')) {
+                tableContent.push(trimmedLine);
+                return;
+            }
+
+            // 处理列表
+            if (trimmedLine.startsWith('- ') || trimmedLine.match(/^\d+\./)) {
+                listContent.push(`<li>${trimmedLine.replace(/^-\s+|^\d+\.\s*/, '')}</li>`);
+                return;
+            }
+
+            // 处理普通段落
+            if (tableContent.length > 0) {
+                sections.content.push(formatTableComplete(tableContent));
+                tableContent = [];
+            }
+            if (listContent.length > 0) {
+                sections.content.push(`<ul>${listContent.join('')}</ul>`);
+                listContent = [];
+            }
+            sections.content.push(`<p>${trimmedLine}</p>`);
         });
 
-        return formattedText;
+        // 处理最后的表格或列表
+        if (tableContent.length > 0) {
+            sections.content.push(formatTableComplete(tableContent));
+        }
+        if (listContent.length > 0) {
+            sections.content.push(`<ul>${listContent.join('')}</ul>`);
+        }
+
+        // 组合所有内容
+        return `
+            ${sections.summary}
+            ${sections.content.join('\n')}
+            ${sections.advantages}
+            ${sections.disadvantages}
+            ${sections.suggestions}
+            ${sections.references}
+        `;
     }
 
-    // 格式化优势劣势列表
+    function formatTableComplete(tableContent) {
+        if (tableContent.length < 2) return ''; // 至少需要表头和分隔行
+
+        let html = '<table class="comparison-table">\n<thead>\n';
+        let isHeader = true;
+        let hasBody = false;
+
+        tableContent.forEach((row, index) => {
+            if (row.replace(/[\s\-|]/g, '') === '') {
+                isHeader = false;
+                hasBody = true;
+                html += '</thead>\n<tbody>\n';
+            } else if (isHeader) {
+                const cells = row.split('|').map(cell => cell.trim()).filter(cell => cell);
+                html += '<tr>' + cells.map(cell => `<th>${cell}</th>`).join('') + '</tr>\n';
+            } else if (hasBody) {
+                const cells = row.split('|').map(cell => cell.trim()).filter(cell => cell);
+                html += '<tr>' + cells.map(cell => `<td>${cell}</td>`).join('') + '</tr>\n';
+            }
+        });
+
+        html += hasBody ? '</tbody>\n</table>' : '</thead>\n</table>';
+        return html;
+    }
+
     function formatList(text) {
         return text.split('，')
             .filter(item => item.trim())
             .map(item => `<li>${item.trim()}</li>`)
             .join('');
-    }
-
-    function formatTable(tableContent) {
-        // 检查是否是表格分隔行
-        if (tableContent.replace(/[\s\-|]/g, '') === '') {
-            return '';
-        }
-
-        const cells = tableContent.split('|').map(cell => cell.trim()).filter(cell => cell);
-        
-        // 检测是否是表头
-        const isHeader = tableContent.includes('---');
-        
-        if (isHeader) {
-            return `<table class="comparison-table">
-                        <thead>
-                            <tr>
-                                ${cells.map(cell => `<th>${cell}</th>`).join('')}
-                            </tr>
-                        </thead>
-                        <tbody>`;
-        } else {
-            return `<tr>${cells.map(cell => `<td>${cell}</td>`).join('')}</tr>`;
-        }
     }
 });
 
