@@ -8,13 +8,15 @@
 - 实时获取最新信息
 - 分类展示搜索结果
 - 响应式设计，支持移动端
+- API使用量跟踪
+- 费用预警系统
 
 ## 技术栈
 
 - 后端：Flask
 - 前端：Bootstrap 5
-- 搜索引擎：DuckDuckGo API
-- 部署：GitHub Pages + Heroku
+- API：OpenAI GPT-3.5
+- 部署：Heroku
 
 ## 安装说明
 
@@ -36,7 +38,13 @@ venv\Scripts\activate  # Windows
 pip install -r requirements.txt
 ```
 
-4. 运行应用：
+4. 设置环境变量：
+```bash
+cp .env.example .env
+# 编辑 .env 文件，设置你的 OpenAI API 密钥
+```
+
+5. 运行应用：
 ```bash
 python app.py
 ```
@@ -44,9 +52,16 @@ python app.py
 ## 使用方法
 
 1. 访问网站
-2. 在搜索框中输入区域名称（如：Point Cook）或邮编（如：3030）
+2. 在搜索框中输入区域名称（如：Toorak）或邮编（如：3142）
 3. 点击搜索按钮或按回车键
 4. 查看分类展示的搜索结果
+
+## API使用量
+
+- 月度预算：$5.00
+- 每次搜索成本：约$0.0046
+- 每月可用次数：约1000次
+- 费用预警系统（颜色提示）
 
 ## 部署说明
 
@@ -55,21 +70,22 @@ python app.py
 heroku create your-app-name
 ```
 
-2. 推送代码：
+2. 设置环境变量：
 ```bash
-git push heroku main
+heroku config:set OPENAI_API_KEY=your-api-key-here
 ```
 
-3. 启动应用：
+3. 推送代码：
 ```bash
-heroku ps:scale web=1
+git push heroku main
 ```
 
 ## 注意事项
 
 - 搜索结果基于公开信息
 - 建议配合其他数据源使用
-- 定期检查API限制情况
+- 定期检查API使用量
+- 不要在代码中硬编码API密钥
 
 ## 贡献指南
 
