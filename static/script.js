@@ -115,40 +115,14 @@ document.addEventListener('DOMContentLoaded', function() {
             .map(line => {
                 const trimmedLine = line.trim();
                 
-                // 处理一级标题（使用固定格式）
-                const primaryTitles = {
-                    '1. 公共设施与政府基建': true,
-                    '2. 教育资源': true,
-                    '3. 医疗资源': true,
-                    '4. 房价趋势与推动因素': true,
-                    '5. 总结': true,
-                    '6. 建议': true,
-                    '7. 参考来源': true
-                };
-
-                // 检查是否是一级标题
-                if (primaryTitles[trimmedLine]) {
-                    return `<h2 class="primary-title">${trimmedLine}</h2>`;
+                // 处理一级标题 (#)
+                if (trimmedLine.startsWith('# ')) {
+                    return `<h2 class="primary-title">${trimmedLine.substring(2)}</h2>`;
                 }
                 
-                // 处理二级标题
-                const secondaryTitles = {
-                    '2.1 公立学校': true,
-                    '2.2 私立学校': true,
-                    '2.3 短板': true,
-                    '3.1 公立医院': true,
-                    '3.2 私立医疗机构': true,
-                    '3.3 短板': true,
-                    '4.1 单元房（Unit）': true,
-                    '4.2 独立屋（House）': true,
-                    '4.3 增长推动因素': true,
-                    '4.4 风险提示': true
-                };
-                
-                // 检查是否是二级标题
-                const titleMatch = trimmedLine.match(/^\d+\.\d+\s+(.+)$/);
-                if (titleMatch && secondaryTitles[trimmedLine]) {
-                    return `<h3 class="secondary-title">${trimmedLine}</h3>`;
+                // 处理二级标题 (##)
+                if (trimmedLine.startsWith('## ')) {
+                    return `<h3 class="secondary-title">${trimmedLine.substring(3)}</h3>`;
                 }
 
                 // 处理总结部分的优势和劣势
