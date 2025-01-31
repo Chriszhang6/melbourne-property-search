@@ -138,17 +138,22 @@ document.addEventListener('DOMContentLoaded', function() {
             .split('\n')
             .filter(line => line.trim() !== '')
             .map(line => {
-                const trimmedLine = line.trim();
+                // 先去除行首和行尾的空格
+                let trimmedLine = line.trim();
                 
                 // 处理一级标题 (#)，确保标题前没有多余的空格
-                if (trimmedLine.match(/^#\s+/)) {
-                    const titleText = trimmedLine.replace(/^#\s+/, '').trim();
+                if (trimmedLine.startsWith('#')) {
+                    // 移除所有#号和后面的空格
+                    const titleText = trimmedLine.replace(/^#+\s*/, '').trim();
+                    // 确保没有多余的空格
                     return `<h2 class="primary-title">${titleText}</h2>`;
                 }
                 
                 // 处理二级标题 (##)，确保标题前没有多余的空格
-                if (trimmedLine.match(/^##\s+/)) {
-                    const titleText = trimmedLine.replace(/^##\s+/, '').trim();
+                if (trimmedLine.startsWith('##')) {
+                    // 移除所有#号和后面的空格
+                    const titleText = trimmedLine.replace(/^#+\s*/, '').trim();
+                    // 确保没有多余的空格
                     return `<h3 class="secondary-title">${titleText}</h3>`;
                 }
 
