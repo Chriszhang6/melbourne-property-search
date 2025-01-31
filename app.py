@@ -38,7 +38,7 @@ COST_PER_1K_OUTPUT_TOKENS = 0.002   # GPT-3.5-turbo 输出价格
 class APIUsageTracker:
     def __init__(self, budget_limit=MONTHLY_BUDGET):
         self.budget_limit = budget_limit
-        self.usage_file = 'api_usage.json'
+        self.usage_file = 'demo_api_usage.json'  # 改为演示版本专用的文件
         self.load_usage()
 
     def load_usage(self):
@@ -47,18 +47,19 @@ class APIUsageTracker:
                 with open(self.usage_file, 'r') as f:
                     self.usage_data = json.load(f)
             else:
-                self.usage_data = {
-                    'current_month': datetime.now().strftime('%Y-%m'),
-                    'total_cost': 0.0,
-                    'requests': []
-                }
+                self.reset_usage_data()
         except Exception as e:
             logger.error(f"加载使用量数据失败: {str(e)}")
-            self.usage_data = {
-                'current_month': datetime.now().strftime('%Y-%m'),
-                'total_cost': 0.0,
-                'requests': []
-            }
+            self.reset_usage_data()
+
+    def reset_usage_data(self):
+        """重置使用量数据"""
+        self.usage_data = {
+            'current_month': datetime.now().strftime('%Y-%m'),
+            'total_cost': 0.0,
+            'requests': [],
+            'api_key_last_4': api_key[-4:]  # 记录API key的最后4位以便识别
+        }
 
     def save_usage(self):
         try:
@@ -457,7 +458,9 @@ def get_usage():
             'current_month': usage_tracker.usage_data['current_month'],
             'total_cost': round(usage_tracker.usage_data['total_cost'], 4),
             'budget_limit': MONTHLY_BUDGET,
-            'remaining_budget': round(MONTHLY_BUDGET - usage_tracker.usage_data['total_cost'], 4)
+            'remaining_budget': round(MONTHLY_BUDGET - usage_tracker.usage_data['total_cost'], 4),
+            'api_key_last_4': usage_tracker.usage_data.get('api_key_last_4', 'N/A'),  # 显示API key的最后4位
+            'version': 'demo'  # 标识这是演示版本
         })
     except Exception as e:
         logger.error(f"获取使用情况失败: {str(e)}")
