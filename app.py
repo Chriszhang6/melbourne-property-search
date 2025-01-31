@@ -1,7 +1,7 @@
 from flask import Flask, render_template, request, jsonify, send_from_directory
 from search_engine import PropertySearchEngine
 import os
-import openai
+from openai import OpenAI
 import time
 import re
 from dotenv import load_dotenv
@@ -20,7 +20,7 @@ logger = logging.getLogger(__name__)
 load_dotenv()
 
 # 配置OpenAI API
-openai.api_key = os.getenv('OPENAI_API_KEY')
+client = OpenAI(api_key=os.getenv('OPENAI_API_KEY'))
 
 app = Flask(__name__)
 # 确保JSON输出中文不被转义
@@ -52,122 +52,42 @@ def analyze_with_openai(suburb):
     """使用OpenAI分析区域信息"""
     try:
         start_time = time.time()
-        system_prompt = """你是一个专业的墨尔本房地产分析师。请针对用户提供的区域，提供详细的购房因素分析报告。
-
-分析要求：
-1. 分析内容必须基于真实数据
-2. 所有数据要标注年份
-3. 数据要尽可能具体，包括具体金额、百分比等
-4. 分析要客观公正，既要指出优势也要指出劣势
-5. 对于缺失的数据要明确标注"数据缺失"
-6. 对于政府投资项目，必须标注具体投资金额，如果无法获取则标注"投资金额未公开"
-
-请按以下模板格式进行分析：
-
-以下是针对[区域名]地区的购房因素分析，涵盖公共设施、教育资源、医疗资源和房价趋势，结合过去10年的发展与数据：
-
-# 公共设施与政府基建
-## 关键项目与拨款
-
-交通升级：
-[列举主要道路升级项目，包括完工时间和具体投资金额]
-[列举公共交通项目，如火车站、巴士路线等，标注投资金额]
-
-社区设施：
-[列举社区中心、图书馆等项目，标注具体投资金额]
-[列举购物中心和商业设施的发展，标注投资规模]
-
-公园与环保：
-[列举环保项目和公园建设，标注投资金额]
-[说明政府年度维护投入]
-
-## 未来规划
-[列举已确认的未来发展项目，标注预算金额]
-[分析对区域发展的潜在影响]
-
-# 教育资源
-## 公立学校
-[列举本地公立学校，包括等级和评级]
-[说明学位情况和申请建议]
-
-## 私立学校
-[列举本地和邻近私立学校]
-[提供学费范围]
-
-## 教会学校
-[列举教会学校选择]
-[说明特色和评价]
-
-## 短板
-[指出教育资源的不足之处]
-
-# 医疗资源
-## 公立医院
-[列举本地和邻近公立医院]
-[说明车程时间和主要科室]
-
-## 私立医疗机构
-[列举私立医院和诊所]
-[说明提供的服务]
-
-## 短板
-[指出医疗资源的不足之处]
-
-# 房价趋势与推动因素
-## 单元房（Unit）
-[列出过去10年的中位价]
-[计算年均增长率]
-
-## 独立屋（House）
-[列出过去10年的中位价]
-[计算年均增长率]
-
-## 增长推动因素
-[分析人口变化]
-[分析基建影响]
-[分析可负担性]
-[分析土地开发情况]
-
-## 风险提示
-[指出潜在风险因素]
-[分析通勤情况]
-
-# 总结
-优势：[列出主要优势，用逗号分隔]
-劣势：[列出主要劣势，用逗号分隔]
-
-# 建议
-[针对不同购房需求提供具体建议]
-[提供选址建议]
-[提供投资建议]
-
-# 参考来源
-[列出数据来源网站]"""
-
-        logger.info("开始生成分析报告...")
         
-        # 使用新版本的API调用方式
-        response = openai.ChatCompletion.create(
+        # 构建提示词
+        prompt = f"""请对墨尔本{suburb}区域进行详细分析，包括以下方面：
+1. 区域概况
+2. 公共设施与政府基建
+3. 教育资源
+4. 医疗资源
+5. 交通情况
+6. 房价趋势
+7. 总结（包括优势和劣势）
+
+请使用Markdown格式输出，使用#和##作为标题标记。对于投资金额，请标注具体数字（如有）。
+"""
+
+        # 调用OpenAI API
+        response = client.chat.completions.create(
             model="gpt-3.5-turbo",
             messages=[
-                {"role": "system", "content": system_prompt},
-                {"role": "user", "content": f"请分析{suburb}区域的购房因素"}
+                {"role": "system", "content": "你是一个专业的房地产分析师，擅长分析墨尔本各个区域。"},
+                {"role": "user", "content": prompt}
             ],
-            temperature=0.2,  # 降低创造性，提高稳定性
+            temperature=0.7,
             max_tokens=2000,
-            top_p=0.8
+            top_p=0.95
         )
-
-        end_time = time.time()
-        duration = end_time - start_time
-        tokens_used = response.usage.total_tokens if hasattr(response, 'usage') else 'unknown'
         
-        logger.info(f"分析报告生成完成，用时: {duration:.2f}秒，使用tokens: {tokens_used}")
+        # 记录API调用时间和token使用情况
+        end_time = time.time()
+        logger.info(f"OpenAI API调用耗时: {end_time - start_time:.2f}秒")
+        logger.info(f"使用的tokens: {response.usage.total_tokens}")
+        
         return response.choices[0].message.content
-
+        
     except Exception as e:
-        logger.error(f"分析过程中出现错误: {str(e)}")
-        return f"分析过程中出现错误: {str(e)}"
+        logger.error(f"OpenAI API调用失败: {str(e)}")
+        raise Exception("生成分析报告时出错，请稍后重试")
 
 @app.route('/')
 def home():
@@ -206,7 +126,7 @@ def search():
 def test_api():
     """测试OpenAI API连接"""
     try:
-        response = openai.ChatCompletion.create(
+        response = client.chat.completions.create(
             model="gpt-3.5-turbo",
             messages=[
                 {"role": "user", "content": "Hello, this is a test."}
