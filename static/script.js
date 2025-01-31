@@ -5,6 +5,28 @@ document.addEventListener('DOMContentLoaded', function() {
     const loadingContainer = document.getElementById('loadingContainer');
     const reportSection = document.getElementById('reportSection');
     const errorContainer = document.getElementById('errorContainer');
+    const printButton = document.getElementById('printButton');
+
+    // 添加打印按钮事件监听
+    printButton.addEventListener('click', function() {
+        // 使用html2pdf库将报告转换为PDF
+        const element = reportSection;
+        const opt = {
+            margin: [10, 10],
+            filename: `${searchInput.value.trim()}_区域分析报告.pdf`,
+            image: { type: 'jpeg', quality: 0.98 },
+            html2canvas: { scale: 2 },
+            jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+        };
+
+        // 显示加载提示
+        showLoading();
+        
+        // 转换为PDF
+        html2pdf().set(opt).from(element).save().then(() => {
+            hideLoading();
+        });
+    });
 
     searchForm.addEventListener('submit', async function(e) {
         e.preventDefault();
@@ -19,6 +41,7 @@ document.addEventListener('DOMContentLoaded', function() {
         showLoading();
         hideError();
         hideReport();
+        printButton.style.display = 'none';
 
         // 记录开始时间
         const startTime = new Date();
@@ -48,6 +71,8 @@ document.addEventListener('DOMContentLoaded', function() {
             const analysisTime = ((endTime - startTime) / 1000).toFixed(1);
 
             displayReport(suburb, data.analysis, analysisTime);
+            // 显示打印按钮
+            printButton.style.display = 'flex';
 
         } catch (error) {
             showError('分析过程中发生错误，请稍后重试');
