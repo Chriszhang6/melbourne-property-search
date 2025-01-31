@@ -201,6 +201,9 @@ body {
     padding-bottom: 0.8rem;
     border-bottom: 3px solid var(--primary-color);
     position: relative;
+    display: flex;
+    align-items: baseline;
+    gap: 0.5rem;
 }
 
 .primary-title::before {

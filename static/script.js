@@ -114,24 +114,30 @@ document.addEventListener('DOMContentLoaded', function() {
             .filter(line => line.trim() !== '')
             .map(line => {
                 // 处理一级标题（数字开头或特定标题）
-                if (/^\d+\./.test(line) || line.startsWith('总结：')) {
-                    const titleText = line.startsWith('总结：') ? line : line.substring(line.indexOf('.') + 1).trim();
-                    // 如果是总结，使用5作为编号
-                    return `<h2 class="primary-title">${line.startsWith('总结：') ? '5. ' + titleText : line}</h2>`;
+                if (/^\d+\./.test(line) || line.startsWith('总结：') || line === '医疗资源' || line === '房价趋势与推动因素') {
+                    let titleText, titleNumber;
+                    
+                    if (line.startsWith('总结：')) {
+                        titleNumber = '5';
+                        titleText = line;
+                    } else if (line === '医疗资源') {
+                        titleNumber = '3';
+                        titleText = line;
+                    } else if (line === '房价趋势与推动因素') {
+                        titleNumber = '4';
+                        titleText = line;
+                    } else {
+                        titleNumber = line.split('.')[0];
+                        titleText = line.substring(line.indexOf('.') + 1).trim();
+                    }
+                    
+                    return `<h2 class="primary-title">${titleNumber}. ${titleText}</h2>`;
                 }
                 
                 // 处理二级标题（x.x格式）
                 if (/^\d+\.\d+/.test(line)) {
                     const titleText = line.substring(line.indexOf('.', line.indexOf('.') + 1) + 1).trim();
                     return `<h3 class="secondary-title"><strong>${line.split('.', 2).join('.')} ${titleText}</strong></h3>`;
-                }
-
-                // 处理特殊的一级标题（医疗资源和房价趋势）
-                if (line.trim() === '医疗资源') {
-                    return `<h2 class="primary-title">3. ${line}</h2>`;
-                }
-                if (line.trim() === '房价趋势与推动因素') {
-                    return `<h2 class="primary-title">4. ${line}</h2>`;
                 }
 
                 // 处理表格
