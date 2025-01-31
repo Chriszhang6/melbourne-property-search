@@ -105,15 +105,16 @@ document.addEventListener('DOMContentLoaded', function() {
             .split('\n')
             .filter(line => line.trim() !== '')
             .map(line => {
-                // 处理标题
-                if (line.startsWith('# ')) {
-                    return `<h2>${line.substring(2)}</h2>`;
+                // 处理一级标题（数字开头）
+                if (/^\d+\./.test(line)) {
+                    const titleText = line.substring(line.indexOf('.') + 1).trim();
+                    return `<h2 class="primary-title">${line.split('.')[0]}. ${titleText}</h2>`;
                 }
-                if (line.startsWith('## ')) {
-                    return `<h3>${line.substring(3)}</h3>`;
-                }
-                if (line.startsWith('### ')) {
-                    return `<h4>${line.substring(4)}</h4>`;
+                
+                // 处理二级标题（x.x格式）
+                if (/^\d+\.\d+/.test(line)) {
+                    const titleText = line.substring(line.indexOf('.', line.indexOf('.') + 1) + 1).trim();
+                    return `<h3 class="secondary-title">${line.split('.', 2).join('.')} ${titleText}</h3>`;
                 }
 
                 // 处理表格
@@ -125,8 +126,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (line.startsWith('- ')) {
                     return `<li>${line.substring(2)}</li>`;
                 }
-                if (line.match(/^\d+\./)) {
-                    return `<li>${line.substring(line.indexOf('.') + 1)}</li>`;
+                if (line.match(/^[a-zA-Z\u4e00-\u9fa5]\d*\./)) {
+                    return `<li>${line.substring(line.indexOf('.') + 1).trim()}</li>`;
                 }
 
                 // 普通段落

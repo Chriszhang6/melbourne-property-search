@@ -184,6 +184,37 @@ body {
     line-height: 1.8;
 }
 
+/* 一级标题样式 */
+.primary-title {
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: var(--text-color);
+    margin: 2.5rem 0 1.5rem;
+    padding-bottom: 0.8rem;
+    border-bottom: 3px solid var(--primary-color);
+    position: relative;
+}
+
+.primary-title::before {
+    content: '';
+    position: absolute;
+    bottom: -3px;
+    left: 0;
+    width: 100px;
+    height: 3px;
+    background-color: var(--secondary-color);
+}
+
+/* 二级标题样式 */
+.secondary-title {
+    font-size: 1.4rem;
+    font-weight: 600;
+    color: var(--text-color);
+    margin: 2rem 0 1rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid var(--border-color);
+}
+
 .analysis-content h3 {
     font-size: 1.4rem;
     font-weight: 600;
@@ -288,5 +319,15 @@ body {
     .comparison-table th,
     .comparison-table td {
         padding: 0.8rem;
+    }
+    
+    .primary-title {
+        font-size: 1.5rem;
+        margin: 2rem 0 1.2rem;
+    }
+    
+    .secondary-title {
+        font-size: 1.2rem;
+        margin: 1.5rem 0 1rem;
     }
 } 
