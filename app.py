@@ -3,6 +3,7 @@ from search_engine import PropertySearchEngine
 import os
 import openai
 import time
+import re
 from dotenv import load_dotenv
 import logging
 import sys
@@ -22,17 +23,36 @@ load_dotenv()
 openai.api_key = os.getenv('OPENAI_API_KEY')
 
 app = Flask(__name__)
+# 确保JSON输出中文不被转义
+app.config['JSON_AS_ASCII'] = False
 
 @app.route('/static/<path:path>')
 def send_static(path):
     return send_from_directory('static', path)
 
-search_engine = PropertySearchEngine()
+# 暂时注释掉未使用的search_engine
+# search_engine = PropertySearchEngine()
+
+def standardize_suburb(suburb):
+    """标准化区域名称，处理包含邮编的情况"""
+    # 移除多余空格并转小写
+    suburb = suburb.lower().strip()
+    
+    # 处理包含3030邮编的情况
+    if '3030' in suburb:
+        return 'point cook'
+        
+    # 如果输入就是3030
+    if suburb == '3030':
+        return 'point cook'
+        
+    return suburb
 
 def analyze_with_openai(suburb):
     """使用OpenAI分析区域信息"""
     try:
-        system_prompt = """你是一个专业的澳大利亚房地产分析师。请针对用户提供的区域，提供详细的购房因素分析报告。
+        start_time = time.time()
+        system_prompt = """你是一个专业的墨尔本房地产分析师。请针对用户提供的区域，提供详细的购房因素分析报告。
 
 分析要求：
 1. 分析内容必须基于真实数据
@@ -67,59 +87,48 @@ def analyze_with_openai(suburb):
 
 # 教育资源
 ## 公立学校
-
 [列举本地公立学校，包括等级和评级]
 [说明学位情况和申请建议]
 
 ## 私立学校
-
 [列举本地和邻近私立学校]
 [提供学费范围]
 
 ## 教会学校
-
-[列举本地和邻近教会学校]
-[提供学费范围并提供特色评价]
+[列举教会学校选择]
+[说明特色和评价]
 
 ## 短板
-
-[指出本地学校的不足之处，参考没有10-12年级，或者没有公立高中，或者没有教会学校，或者没有私立学校]
+[指出教育资源的不足之处]
 
 # 医疗资源
 ## 公立医院
-
 [列举本地和邻近公立医院]
 [说明车程时间和主要科室]
 
 ## 私立医疗机构
-
 [列举私立医院和诊所]
 [说明提供的服务]
 
 ## 短板
-
 [指出医疗资源的不足之处]
 
 # 房价趋势与推动因素
-## 单元房（Unit）:
-
+## 单元房（Unit）
 [列出过去10年的中位价]
 [计算年均增长率]
 
-## 独立屋（House）:
-
+## 独立屋（House）
 [列出过去10年的中位价]
 [计算年均增长率]
 
 ## 增长推动因素
-
 [分析人口变化]
 [分析基建影响]
 [分析可负担性]
 [分析土地开发情况]
 
 ## 风险提示
-
 [指出潜在风险因素]
 [分析通勤情况]
 
@@ -133,113 +142,27 @@ def analyze_with_openai(suburb):
 [提供投资建议]
 
 # 参考来源
-[列出数据来源网站]
-
-范例答案：
-以下是针对澳大利亚Point Cook地区的购房因素分析，涵盖公共设施、教育资源、医疗资源和房价趋势，结合过去10年的发展与数据：
-
-# 公共设施与政府基建
-## 关键项目与拨款:
-
-交通升级：
-- Point Cook Road扩建：2016年完成车道拓宽，缓解交通拥堵。
-- Williams Landing火车站（2013年启用）：连接墨尔本CBD的V/Line和地铁服务，提升通勤便利性。
-
-社区设施：
-- Saltwater社区中心（2018年）：政府拨款$1500万澳元，含图书馆、游泳池和体育场。
-- Sanctuary Lakes购物中心扩建（2020年）：新增超市和零售设施。
-
-公园与环保：
-- Cheetham湿地保护计划：州政府持续拨款维护生态保护区。
-- 多个新公园建设：如Featherbrook社区公园（2021年）。
-
-## 未来规划:
-
-- Werribee地铁线延伸提案（规划中）：可能进一步改善西南区轨道交通。
-- Altona North物流中心建设（邻近区）：预计带动就业和区域经济。
-
-# 教育资源
-## 公立学校:
-
-- 3所P-9学校（Point Cook College、Saltwater、Featherbrook），均配备现代化设施，学位紧张需提前申请。
-
-## 私立学校:
-
-- 邻近的Westbourne Grammar（车程10分钟）是首选，年学费约2万-3万澳元。
-
-## 教会学校:
-
-- Stella Maris Catholic小学（口碑良好），中学依赖邻近的Thomas Carr College（Tarneit）。
-
-## 短板:
-
-- 本地缺乏公立高中（10-12年级），需跨区就读Werribee或Tarneit。
-
-# 医疗资源
-## 公立医院:
-
-- Werribee Mercy Hospital（车程15分钟）：提供急诊、产科和基础专科服务。
-- Sunshine Hospital（车程25分钟）：大型综合医院，含儿科和重症监护。
-
-## 私立医疗机构:
-
-- Point Cook Medical Centre：全科诊所和专科门诊。
-- Sanctuary Lakes私立门诊：提供牙科、理疗等服务。
-
-## 短板:
-
-- 区域内无大型私立医院，复杂手术需前往墨尔本市中心或Geelong。
-
-# 房价趋势与推动因素
-## 单元房（Unit）:
-
-- 过去10年的中位价变化
-- 年均增长率分析
-
-## 独立屋（House）:
-
-- 过去10年的中位价变化
-- 年均增长率分析
-
-## 增长推动因素:
-
-- 人口激增：10年内居民数量翻倍（现超6万人），年轻家庭占比高。
-- 基建投资：交通和学校建设提升宜居性。
-- 可负担性：相比墨尔本东区，房价较低吸引首购族和投资者。
-- 土地开发：大量新住宅区（如Saltwater Coast）推高需求。
-
-## 风险提示:
-
-- 供应过剩：部分新区开发可能导致短期房价波动。
-- 通勤依赖：80%居民需驾车或乘火车前往CBD（约40分钟车程）。
-
-# 总结
-优势：交通便利，基础设施完善，自然环境优美，发展潜力大
-劣势：教育资源有限，医疗机构相对不足，房价增长速度相对缓慢
-
-# 建议
-- 优先选择成熟社区：如Point Cook Town Centre周边，配套更完善。
-- 关注学区房：靠近Point Cook College或Saltwater P-9的房产溢价率较高。
-- 长期持有：人口增长和基建升级支撑中长期房价上涨潜力。
-
-# 参考来源
-- 房价查询：Domain 或 CoreLogic
-- 政府规划：Wyndham City Council"""
+[列出数据来源网站]"""
 
         logger.info("开始生成分析报告...")
         
-        response = openai.chat.completions.create(
+        # 使用新版本的API调用方式
+        response = openai.ChatCompletion.create(
             model="gpt-3.5-turbo",
             messages=[
                 {"role": "system", "content": system_prompt},
                 {"role": "user", "content": f"请分析{suburb}区域的购房因素"}
             ],
-            temperature=0.7,
+            temperature=0.2,  # 降低创造性，提高稳定性
             max_tokens=2000,
-            top_p=0.9
+            top_p=0.8
         )
 
-        logger.info("分析报告生成完成")
+        end_time = time.time()
+        duration = end_time - start_time
+        tokens_used = response.usage.total_tokens if hasattr(response, 'usage') else 'unknown'
+        
+        logger.info(f"分析报告生成完成，用时: {duration:.2f}秒，使用tokens: {tokens_used}")
         return response.choices[0].message.content
 
     except Exception as e:
@@ -264,18 +187,16 @@ def search():
             logger.error("未提供区域名称")
             return jsonify({'error': '请输入区域名称或邮编'}), 400
         
-        # 标准化输入
-        suburb = suburb.lower().strip()
-        if suburb == '3030':
-            suburb = 'point cook'
-        
+        # 使用新的标准化函数处理输入
+        suburb = standardize_suburb(suburb)
         logger.info(f"分析区域: {suburb}")
         
         # 直接使用OpenAI分析
         analysis = analyze_with_openai(suburb)
         
         return jsonify({
-            'analysis': analysis
+            'analysis': analysis,
+            'disclaimer': '注意：本报告中的数据仅供参考，具体信息请以官方发布为准。'
         })
     except Exception as e:
         logger.error(f"处理请求时出错: {str(e)}")
@@ -285,12 +206,13 @@ def search():
 def test_api():
     """测试OpenAI API连接"""
     try:
-        response = openai.chat.completions.create(
+        response = openai.ChatCompletion.create(
             model="gpt-3.5-turbo",
             messages=[
                 {"role": "user", "content": "Hello, this is a test."}
             ],
-            max_tokens=10
+            max_tokens=10,
+            temperature=0.2
         )
         return jsonify({
             'status': 'success',

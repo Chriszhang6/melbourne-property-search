@@ -97,6 +97,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 <h2>${suburb} 区域分析报告</h2>
                 <p class="report-date">生成日期：${currentDate}</p>
                 <p class="analysis-time">分析耗时：${analysisTime} 秒</p>
+                <p class="disclaimer">注意：本报告中的数据仅供参考，具体信息请以官方发布为准。</p>
             </div>
             <div class="report-content">
                 ${formatAnalysis(analysis)}
