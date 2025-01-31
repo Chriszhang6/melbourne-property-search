@@ -48,6 +48,8 @@ document.addEventListener('DOMContentLoaded', function() {
             const analysisTime = ((endTime - startTime) / 1000).toFixed(1);
 
             displayReport(suburb, data.analysis, analysisTime);
+            // 搜索完成后立即更新API使用量
+            updateAPIUsage();
 
         } catch (error) {
             showError('分析过程中发生错误，请稍后重试');
