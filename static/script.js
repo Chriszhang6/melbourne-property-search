@@ -1,113 +1,71 @@
 function searchSuburb() {
     const suburbInput = document.getElementById('suburb-input');
-    const suburb = suburbInput.value.trim();
-    
-    if (!suburb) {
-        alert('请输入区域名称或邮编');
-        return;
-    }
-    
-    // 显示加载动画
-    document.getElementById('loading').classList.remove('d-none');
-    
+    const loadingDiv = document.getElementById('loading');
+    const gptAnalysis = document.getElementById('gpt-analysis');
+
     // 清空之前的结果
-    clearResults();
-    
+    gptAnalysis.innerHTML = '';
+
+    // 显示加载动画
+    loadingDiv.classList.remove('d-none');
+
     // 发送搜索请求
     fetch('/search', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ suburb: suburb })
+        body: JSON.stringify({
+            suburb: suburbInput.value
+        })
     })
     .then(response => response.json())
     .then(data => {
         // 隐藏加载动画
-        document.getElementById('loading').classList.add('d-none');
-        
+        loadingDiv.classList.add('d-none');
+
         if (data.error) {
-            alert(data.error);
+            gptAnalysis.innerHTML = `<div class="error-message">${data.error}</div>`;
             return;
         }
-        
+
         // 显示GPT分析结果
-        displayGPTAnalysis(data.analysis);
-        
-        // 显示原始搜索结果
-        displayResults(data.raw_results);
+        const formattedAnalysis = formatAnalysis(data.analysis);
+        gptAnalysis.innerHTML = formattedAnalysis;
     })
     .catch(error => {
         console.error('Error:', error);
-        document.getElementById('loading').classList.add('d-none');
-        alert('搜索出错，请稍后重试');
+        loadingDiv.classList.add('d-none');
+        gptAnalysis.innerHTML = '<div class="error-message">分析过程中出现错误，请稍后重试</div>';
     });
 }
 
-function clearResults() {
-    document.getElementById('infrastructure-results').innerHTML = '';
-    document.getElementById('crime-results').innerHTML = '';
-    document.getElementById('property-results').innerHTML = '';
-    document.getElementById('gpt-analysis').innerHTML = '';
-}
+function formatAnalysis(text) {
+    if (!text) return '';
 
-function displayResults(data) {
-    // 显示教育资源信息
-    const infrastructureHtml = data.infrastructure.map(item => `
-        <li>
-            <a href="${item.link}" target="_blank" title="${item.title}">
-                ${item.title}
-            </a>
-            ${item.date ? `<span class="date">(${item.date})</span>` : ''}
-        </li>
-    `).join('');
-    document.getElementById('infrastructure-results').innerHTML = infrastructureHtml || '<li>暂无相关信息</li>';
+    // 将文本中的换行符转换为HTML换行
+    let formatted = text.replace(/\n/g, '<br>');
 
-    // 显示医疗资源信息
-    const crimeHtml = data.crime.map(item => `
-        <li>
-            <a href="${item.link}" target="_blank" title="${item.title}">
-                ${item.title}
-            </a>
-            ${item.date ? `<span class="date">(${item.date})</span>` : ''}
-        </li>
-    `).join('');
-    document.getElementById('crime-results').innerHTML = crimeHtml || '<li>暂无相关信息</li>';
-
-    // 显示治安状况信息
-    const propertyHtml = data.property.map(item => `
-        <li>
-            <a href="${item.link}" target="_blank" title="${item.title}">
-                ${item.title}
-            </a>
-            ${item.date ? `<span class="date">(${item.date})</span>` : ''}
-        </li>
-    `).join('');
-    document.getElementById('property-results').innerHTML = propertyHtml || '<li>暂无相关信息</li>';
-}
-
-function displayGPTAnalysis(analysis) {
-    // 将分析结果中的链接转换为HTML链接
-    const processedAnalysis = analysis.replace(/\[(.*?)\]\((https?:\/\/[^\s\)]+)\)/g, '<a href="$2" target="_blank">$1</a>');
+    // 添加标题样式
+    formatted = formatted.replace(/^([\d\.]+\s+[^：:]+[：:])/gm, '<h3>$1</h3>');
     
-    const analysisHtml = `
-        <div class="analysis-content">
-            ${processedAnalysis.split('\n').map(paragraph => {
-                if (paragraph.trim().startsWith('#')) {
-                    // 处理标题
-                    return `<h3>${paragraph.replace(/^#+\s+/, '')}</h3>`;
-                } else if (paragraph.trim().startsWith('-')) {
-                    // 处理列表项
-                    return `<ul><li>${paragraph.replace(/^-\s+/, '')}</li></ul>`;
-                } else if (paragraph.trim()) {
-                    // 处理普通段落
-                    return `<p>${paragraph}</p>`;
-                }
-                return '';
-            }).join('')}
-        </div>
-    `;
-    document.getElementById('gpt-analysis').innerHTML = analysisHtml;
+    // 添加子标题样式
+    formatted = formatted.replace(/^([^-\n]+)：/gm, '<h4>$1：</h4>');
+    
+    // 添加列表项样式
+    formatted = formatted.replace(/^-\s+(.+)$/gm, '<li>$1</li>');
+    
+    // 将连续的列表项包装在ul标签中
+    formatted = formatted.replace(/(<li>.+<\/li>\n?)+/g, '<ul>$&</ul>');
+
+    // 处理表格样式
+    if (formatted.includes('优势') && formatted.includes('劣势')) {
+        formatted = formatted.replace(/优势\t劣势/, '<table class="comparison-table"><tr><th>优势</th><th>劣势</th></tr>');
+        formatted = formatted.replace(/([^\n]+)\t([^\n]+)/g, '<tr><td>$1</td><td>$2</td></tr>');
+        formatted += '</table>';
+    }
+
+    return formatted;
 }
 
 // 添加回车键搜索功能

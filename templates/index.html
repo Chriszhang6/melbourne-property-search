@@ -13,8 +13,8 @@
         <div class="search-container">
             <h1>墨尔本房产信息搜索</h1>
             <div class="search-box">
-                <input type="text" id="suburb-input" placeholder="输入区域名称或邮编（如：Point Cook 或 3030）">
-                <button onclick="searchSuburb()">搜索</button>
+                <input type="text" id="suburb-input" placeholder="输入区域名称（如：Point Cook）">
+                <button onclick="searchSuburb()">分析</button>
             </div>
         </div>
 
@@ -28,26 +28,6 @@
             <div class="analysis-section">
                 <h2>区域综合分析</h2>
                 <div id="gpt-analysis" class="analysis-content">
-                </div>
-            </div>
-
-            <!-- 搜索结果列表 -->
-            <div class="search-results">
-                <div class="result-section">
-                    <h3>原始数据</h3>
-                    <div class="references-section">
-                        <h4>教育资源</h4>
-                        <ul id="infrastructure-results" class="reference-list">
-                        </ul>
-                        
-                        <h4>医疗资源</h4>
-                        <ul id="crime-results" class="reference-list">
-                        </ul>
-                        
-                        <h4>治安状况</h4>
-                        <ul id="property-results" class="reference-list">
-                        </ul>
-                    </div>
                 </div>
             </div>
         </div>
