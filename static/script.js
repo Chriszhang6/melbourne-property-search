@@ -1,76 +1,168 @@
-function searchSuburb() {
-    const suburbInput = document.getElementById('suburb-input');
-    const loadingDiv = document.getElementById('loading');
-    const gptAnalysis = document.getElementById('gpt-analysis');
+// 等待 DOM 加载完成
+document.addEventListener('DOMContentLoaded', function() {
+    const searchForm = document.getElementById('searchForm');
+    const searchInput = document.getElementById('searchInput');
+    const loadingContainer = document.getElementById('loadingContainer');
+    const reportSection = document.getElementById('reportSection');
+    const errorContainer = document.getElementById('errorContainer');
 
-    // 清空之前的结果
-    gptAnalysis.innerHTML = '';
-
-    // 显示加载动画
-    loadingDiv.classList.remove('d-none');
-
-    // 发送搜索请求
-    fetch('/search', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-            suburb: suburbInput.value
-        })
-    })
-    .then(response => response.json())
-    .then(data => {
-        // 隐藏加载动画
-        loadingDiv.classList.add('d-none');
-
-        if (data.error) {
-            gptAnalysis.innerHTML = `<div class="error-message">${data.error}</div>`;
+    searchForm.addEventListener('submit', async function(e) {
+        e.preventDefault();
+        const suburb = searchInput.value.trim();
+        
+        if (!suburb) {
+            showError('请输入区域名称');
             return;
         }
 
-        // 显示GPT分析结果
-        const formattedAnalysis = formatAnalysis(data.analysis);
-        gptAnalysis.innerHTML = formattedAnalysis;
-    })
-    .catch(error => {
-        console.error('Error:', error);
-        loadingDiv.classList.add('d-none');
-        gptAnalysis.innerHTML = '<div class="error-message">分析过程中出现错误，请稍后重试</div>';
+        // 显示加载动画
+        showLoading();
+        hideError();
+        hideReport();
+
+        try {
+            const response = await fetch('/search', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ suburb: suburb })
+            });
+
+            if (!response.ok) {
+                throw new Error('服务器响应错误');
+            }
+
+            const data = await response.json();
+            
+            if (data.error) {
+                showError(data.error);
+                return;
+            }
+
+            displayReport(suburb, data.analysis);
+
+        } catch (error) {
+            showError('分析过程中发生错误，请稍后重试');
+            console.error('Error:', error);
+        } finally {
+            hideLoading();
+        }
     });
-}
 
-function formatAnalysis(text) {
-    if (!text) return '';
-
-    // 将文本中的换行符转换为HTML换行
-    let formatted = text.replace(/\n/g, '<br>');
-
-    // 添加标题样式
-    formatted = formatted.replace(/^([\d\.]+\s+[^：:]+[：:])/gm, '<h3>$1</h3>');
-    
-    // 添加子标题样式
-    formatted = formatted.replace(/^([^-\n]+)：/gm, '<h4>$1：</h4>');
-    
-    // 添加列表项样式
-    formatted = formatted.replace(/^-\s+(.+)$/gm, '<li>$1</li>');
-    
-    // 将连续的列表项包装在ul标签中
-    formatted = formatted.replace(/(<li>.+<\/li>\n?)+/g, '<ul>$&</ul>');
-
-    // 处理表格样式
-    if (formatted.includes('优势') && formatted.includes('劣势')) {
-        formatted = formatted.replace(/优势\t劣势/, '<table class="comparison-table"><tr><th>优势</th><th>劣势</th></tr>');
-        formatted = formatted.replace(/([^\n]+)\t([^\n]+)/g, '<tr><td>$1</td><td>$2</td></tr>');
-        formatted += '</table>';
+    function showLoading() {
+        loadingContainer.style.display = 'flex';
+        loadingContainer.innerHTML = `
+            <div class="loading-content">
+                <div class="spinner"></div>
+                <p>正在生成专业分析报告，请稍候...</p>
+            </div>
+        `;
     }
 
-    return formatted;
-}
+    function hideLoading() {
+        loadingContainer.style.display = 'none';
+    }
 
-// 添加回车键搜索功能
-document.getElementById('suburb-input').addEventListener('keypress', function(e) {
-    if (e.key === 'Enter') {
-        searchSuburb();
+    function showError(message) {
+        errorContainer.style.display = 'block';
+        errorContainer.innerHTML = `<div class="error-message">${message}</div>`;
+    }
+
+    function hideError() {
+        errorContainer.style.display = 'none';
+    }
+
+    function hideReport() {
+        reportSection.style.display = 'none';
+    }
+
+    function displayReport(suburb, analysis) {
+        const currentDate = new Date().toLocaleDateString('zh-CN', {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric'
+        });
+
+        reportSection.style.display = 'block';
+        reportSection.innerHTML = `
+            <div class="report-header">
+                <h2>${suburb} 房产投资分析报告</h2>
+                <p class="report-date">生成日期：${currentDate}</p>
+            </div>
+            <div class="report-content">
+                ${formatAnalysis(analysis)}
+            </div>
+        `;
+
+        // 滚动到报告部分
+        reportSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+
+    function formatAnalysis(analysis) {
+        // 将换行符转换为HTML段落
+        let formattedText = analysis
+            .split('\n')
+            .filter(line => line.trim() !== '')
+            .map(line => {
+                // 处理标题
+                if (line.startsWith('# ')) {
+                    return `<h2>${line.substring(2)}</h2>`;
+                }
+                if (line.startsWith('## ')) {
+                    return `<h3>${line.substring(3)}</h3>`;
+                }
+                if (line.startsWith('### ')) {
+                    return `<h4>${line.substring(4)}</h4>`;
+                }
+
+                // 处理表格
+                if (line.includes('|')) {
+                    return formatTable(line);
+                }
+
+                // 处理列表
+                if (line.startsWith('- ')) {
+                    return `<li>${line.substring(2)}</li>`;
+                }
+                if (line.match(/^\d+\./)) {
+                    return `<li>${line.substring(line.indexOf('.') + 1)}</li>`;
+                }
+
+                // 普通段落
+                return `<p>${line}</p>`;
+            })
+            .join('');
+
+        // 将连续的li元素包装在ul中
+        formattedText = formattedText.replace(/<li>.*?<\/li>(?:\s*<li>.*?<\/li>)+/g, match => {
+            return `<ul>${match}</ul>`;
+        });
+
+        return formattedText;
+    }
+
+    function formatTable(tableContent) {
+        // 检查是否是表格分隔行
+        if (tableContent.replace(/[\s\-|]/g, '') === '') {
+            return '';
+        }
+
+        const cells = tableContent.split('|').map(cell => cell.trim()).filter(cell => cell);
+        
+        // 检测是否是表头
+        const isHeader = tableContent.includes('---');
+        
+        if (isHeader) {
+            return `<table class="comparison-table">
+                        <thead>
+                            <tr>
+                                ${cells.map(cell => `<th>${cell}</th>`).join('')}
+                            </tr>
+                        </thead>
+                        <tbody>`;
+        } else {
+            return `<tr>${cells.map(cell => `<td>${cell}</td>`).join('')}</tr>`;
+        }
     }
 }); 
