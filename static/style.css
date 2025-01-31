@@ -5,7 +5,7 @@
     --background-color: #fafafa;
     --text-color: #1a1a1a;
     --border-color: #e2e8f0;
-    --header-height: 60px;  /* 减小header高度 */
+    --header-height: 80px;
 }
 
 body {
@@ -28,27 +28,27 @@ body {
 .app-header {
     background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
     color: white;
-    padding: 1rem 0;  /* 减小padding */
+    padding: 1.5rem 0;
     box-shadow: 0 4px 20px rgba(0,0,0,0.15);
 }
 
 .nav-content {
     max-width: 1200px;
     margin: 0 auto;
-    padding: 0 1rem;  /* 减小padding */
+    padding: 0 2rem;
     text-align: center;
 }
 
 .app-header h1 {
-    font-size: 1.8rem;  /* 减小标题字体 */
+    font-size: 2.5rem;
     font-weight: 700;
     margin: 0;
 }
 
 .app-header .subtitle {
-    font-size: 1rem;  /* 减小副标题字体 */
+    font-size: 1.1rem;
     opacity: 0.9;
-    margin-top: 0.3rem;  /* 减小margin */
+    margin-top: 0.5rem;
 }
 
 /* 主要内容区域 */
@@ -56,18 +56,17 @@ body {
     flex: 1;
     max-width: 1200px;
     margin: 0 auto;
-    padding: 1rem;  /* 减小padding */
+    padding: 2rem;
     width: 100%;
-    box-sizing: border-box;
 }
 
 /* 搜索区域样式 */
 .search-section {
     background: white;
-    padding: 1rem;  /* 减小padding */
+    padding: 2rem;
     border-radius: 12px;
     box-shadow: 0 4px 6px rgba(0,0,0,0.05);
-    margin-bottom: 1rem;  /* 减小margin */
+    margin-bottom: 2rem;
 }
 
 .search-box {
@@ -77,36 +76,30 @@ body {
 
 .input-group {
     box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-    flex-wrap: nowrap;  /* 防止在小屏幕上换行 */
 }
 
 .input-group-text {
     background-color: white;
     border-right: none;
-    padding: 0.5rem 0.8rem;  /* 减小padding */
 }
 
 .form-control {
     border-left: none;
-    padding: 0.5rem 0.8rem;  /* 减小padding */
-    font-size: 0.9rem;  /* 减小字体 */
-    min-width: 0;  /* 允许输入框缩小 */
+    padding: 0.8rem 1rem;
+    font-size: 1rem;
 }
 
-.form-control::placeholder {
-    font-size: 0.85rem;  /* 减小placeholder字体 */
-    white-space: nowrap;  /* 防止文字换行 */
-    text-overflow: ellipsis;  /* 超出显示省略号 */
-    overflow: hidden;
+.form-control:focus {
+    box-shadow: none;
+    border-color: var(--border-color);
 }
 
 .btn-primary {
     background: linear-gradient(to right, var(--primary-color), var(--secondary-color));
     border: none;
-    padding: 0.5rem 1rem;  /* 减小padding */
+    padding: 0.8rem 1.5rem;
     font-weight: 500;
     transition: all 0.3s ease;
-    white-space: nowrap;  /* 防止按钮文字换行 */
 }
 
 .btn-primary:hover {
@@ -150,10 +143,6 @@ body {
     box-shadow: 0 4px 6px rgba(0,0,0,0.05);
     margin-bottom: 2rem;
     overflow: hidden;
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch; /* 在iOS上支持平滑滚动 */
-    max-width: 100%;
-    box-sizing: border-box;
 }
 
 .report-header {
@@ -187,155 +176,25 @@ body {
     line-height: 1.5;
     color: var(--text-color);
     letter-spacing: 0.01em;
-    overflow-wrap: break-word;
-    word-wrap: break-word;
-    word-break: break-word;
-    max-width: 100%;
-    box-sizing: border-box;
-}
-
-.report-content > * {
-    max-width: 100%;
-    margin-bottom: 1rem;
 }
 
 .report-content p {
     margin: 0.5rem 0;
     text-align: left;
     padding: 0;
-    max-width: 100%;
-    overflow-wrap: break-word;
-    white-space: pre-wrap;
-}
-
-/* 表格容器样式 */
-.table-container {
-    width: 100%;
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-    margin: 1rem 0;
-}
-
-/* 表格样式 */
-.comparison-table {
-    width: 100%;
-    border-collapse: collapse;
-    margin: 1rem 0;
-    font-size: 0.9rem;
-}
-
-.comparison-table th,
-.comparison-table td {
-    padding: 0.8rem;
-    border: 1px solid var(--border-color);
-    text-align: left;
-    min-width: 120px;
-}
-
-.comparison-table th {
-    background: rgba(14, 165, 233, 0.05);
-    font-weight: 600;
-}
-
-/* 响应式设计 */
-@media (max-width: 768px) {
-    .report-content {
-        padding: 1rem;
-    }
-
-    .comparison-table {
-        font-size: 0.85rem;
-    }
-
-    .comparison-table th,
-    .comparison-table td {
-        padding: 0.6rem;
-        min-width: 100px;
-    }
-}
-
-@media (max-width: 480px) {
-    .report-content {
-        padding: 0.8rem;
-        font-size: 0.85rem;
-    }
-
-    .report-header {
-        padding: 1rem;
-    }
-
-    .report-header h2 {
-        font-size: 1.4rem;
-    }
-
-    .comparison-table {
-        font-size: 0.8rem;
-    }
-
-    .comparison-table th,
-    .comparison-table td {
-        padding: 0.5rem;
-        min-width: 80px;
-    }
-
-    /* 确保在小屏幕上的间距 */
-    .report-content > * {
-        margin-bottom: 0.8rem;
-    }
-}
-
-/* 确保所有内容都能完整显示 */
-.report-summary,
-.advantages,
-.disadvantages,
-.suggestions,
-.references {
-    width: 100%;
-    box-sizing: border-box;
-    margin: 1rem 0;
-    padding: 1rem;
-    border-radius: 8px;
-    overflow-wrap: break-word;
-    word-wrap: break-word;
-    word-break: break-word;
-}
-
-/* 列表样式优化 */
-.report-content ul {
-    margin: 0.5rem 0;
-    padding-left: 1.2rem;
-    list-style-position: outside;
-    width: 100%;
-    box-sizing: border-box;
-}
-
-.report-content li {
-    margin-bottom: 0.3rem;
-    line-height: 1.5;
-    text-align: left;
-    overflow-wrap: break-word;
-    word-wrap: break-word;
-    word-break: break-word;
 }
 
 .report-summary {
     background: #f8fafc;
     padding: 1.5rem;
     border-radius: 8px;
-    margin: 1.5rem 0;
-    border-left: 4px solid var(--primary-color);
+    margin-bottom: 2rem;
 }
 
 .report-summary h3 {
     font-size: 1.2rem;
     font-weight: 600;
     margin: 0 0 1rem;
-    color: var(--primary-color);
-}
-
-.report-summary p {
-    margin: 0;
-    line-height: 1.6;
 }
 
 /* 分析内容样式 */
@@ -366,6 +225,43 @@ body {
     text-align: left;
 }
 
+/* 列表样式 */
+.report-content ul {
+    margin: 0.5rem 0;
+    padding-left: 1.2rem;
+    text-align: left;
+}
+
+.report-content li {
+    margin-bottom: 0.3rem;
+    line-height: 1.5;
+    text-align: left;
+}
+
+/* 表格样式 */
+.comparison-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    margin: 1.2rem 0;
+    font-size: 0.9rem;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+}
+
+.comparison-table th {
+    background: rgba(14, 165, 233, 0.05);
+    font-weight: 600;
+    text-align: left;
+    padding: 0.8rem;
+    border: 1px solid var(--border-color);
+}
+
+.comparison-table td {
+    padding: 0.8rem;
+    border: 1px solid var(--border-color);
+    line-height: 1.5;
+}
+
 /* 页脚样式 */
 .app-footer {
     background: white;
@@ -387,85 +283,41 @@ body {
 
 /* 响应式设计 */
 @media (max-width: 768px) {
-    .app-header h1 {
-        font-size: 1.5rem;
-    }
-    
-    .app-header .subtitle {
-        font-size: 0.9rem;
-    }
-    
-    .form-control {
-        font-size: 0.85rem;
-    }
-    
-    .btn-primary {
-        padding: 0.5rem 0.8rem;
-    }
-    
-    .api-usage {
-        font-size: 0.75rem;
-        padding: 4px 8px;
-    }
-}
-
-@media (max-width: 480px) {
-    .app-header h1 {
-        font-size: 1.3rem;
-    }
-    
-    .app-header .subtitle {
-        font-size: 0.8rem;
-    }
-    
     .main-content {
-        padding: 0.5rem;
+        padding: 1rem;
+    }
+    
+    .app-header h1 {
+        font-size: 1.8rem;
     }
     
     .search-section {
-        padding: 0.8rem;
+        padding: 1rem;
     }
     
-    .form-control::placeholder {
-        font-size: 0.8rem;
-    }
-    
-    .btn-primary {
-        padding: 0.5rem 0.6rem;
+    .report-header {
+        padding: 1.5rem;
     }
     
     .report-content {
-        padding: 1rem;
+        padding: 1.5rem;
         font-size: 0.9rem;
     }
     
-    .report-content p {
-        margin: 0.4rem 0;
+    .analysis-content {
+        font-size: 0.9rem;
     }
     
-    .report-summary,
-    .suggestions,
-    .references,
-    .advantages,
-    .disadvantages {
-        padding: 1rem;
-        margin: 1rem 0;
+    .primary-title {
+        font-size: 1.3rem;
+        margin: 2rem 0 1rem;
+        padding: 0.5rem 0;
     }
     
-    .report-summary h3,
-    .suggestions h3,
-    .references h3,
-    .advantages h4,
-    .disadvantages h4 {
-        font-size: 1.1rem;
-        margin: 0 0 0.8rem;
-    }
-    
-    /* 确保在小屏幕上文字不会溢出 */
-    .report-section {
-        width: 100%;
-        box-sizing: border-box;
-        overflow-x: hidden;
+    .secondary-title {
+        font-size: 1rem;
+        margin: 1.5rem 0 0.8rem;
+        padding: 0.4rem 0.6rem;
     }
 }
 
@@ -476,8 +328,6 @@ body {
     border-radius: 6px;
     background: #f8fafc;
     text-align: left;
-    overflow-wrap: break-word;  /* 添加自动换行 */
-    word-wrap: break-word;      /* 兼容性支持 */
 }
 
 .advantages h4, .disadvantages h4 {
@@ -556,18 +406,19 @@ body {
 /* API使用量显示 */
 .api-usage {
     position: fixed;
-    top: 10px;  /* 减小top距离 */
-    right: 10px;  /* 减小right距离 */
+    top: 20px;
+    right: 20px;
     background-color: rgba(255, 255, 255, 0.9);
-    padding: 6px 12px;  /* 减小padding */
+    padding: 8px 15px;
     border-radius: 20px;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-    font-size: 0.8rem;  /* 减小字体 */
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    font-size: 14px;
     display: flex;
     align-items: center;
-    gap: 6px;  /* 减小间距 */
+    gap: 8px;
     z-index: 1000;
     border: 1px solid #e0e0e0;
+    transition: all 0.3s ease;
 }
 
 .api-usage:hover {
@@ -583,46 +434,4 @@ body {
 .api-usage span {
     color: #333;
     font-weight: 500;
-}
-
-/* 建议部分样式 */
-.suggestions {
-    background: #f0fdf4;
-    padding: 1.5rem;
-    border-radius: 8px;
-    margin: 1.5rem 0;
-    border-left: 4px solid #22c55e;
-}
-
-.suggestions h3 {
-    font-size: 1.2rem;
-    font-weight: 600;
-    margin: 0 0 1rem;
-    color: #22c55e;
-}
-
-.suggestions p {
-    margin: 0;
-    line-height: 1.6;
-}
-
-/* 参考资料部分样式 */
-.references {
-    background: #f8fafc;
-    padding: 1.5rem;
-    border-radius: 8px;
-    margin: 1.5rem 0;
-    border-left: 4px solid #6366f1;
-}
-
-.references h3 {
-    font-size: 1.2rem;
-    font-weight: 600;
-    margin: 0 0 1rem;
-    color: #6366f1;
-}
-
-.references p {
-    margin: 0;
-    line-height: 1.6;
 } 
