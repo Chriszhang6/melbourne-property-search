@@ -242,4 +242,38 @@ document.addEventListener('DOMContentLoaded', function() {
             return `<tr>${cells.map(cell => `<td>${cell}</td>`).join('')}</tr>`;
         }
     }
+});
+
+// API使用量更新函数
+async function updateAPIUsage() {
+    try {
+        const response = await fetch('/usage');
+        if (!response.ok) {
+            throw new Error('服务器响应错误');
+        }
+        const data = await response.json();
+        const costElement = document.getElementById('api-cost');
+        if (costElement) {
+            costElement.textContent = data.total_cost.toFixed(4);
+            // 根据使用量调整颜色
+            const usagePercentage = (data.total_cost / data.budget_limit) * 100;
+            const icon = document.querySelector('.api-usage i');
+            if (usagePercentage >= 90) {
+                icon.style.color = '#f44336'; // 红色
+            } else if (usagePercentage >= 70) {
+                icon.style.color = '#ff9800'; // 橙色
+            } else {
+                icon.style.color = '#4CAF50'; // 绿色
+            }
+        }
+    } catch (error) {
+        console.error('更新API使用量失败:', error);
+    }
+}
+
+// 页面加载时更新API使用量
+document.addEventListener('DOMContentLoaded', () => {
+    updateAPIUsage();
+    // 每5分钟更新一次
+    setInterval(updateAPIUsage, 5 * 60 * 1000);
 }); 

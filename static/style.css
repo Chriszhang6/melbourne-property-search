@@ -401,4 +401,37 @@ body {
     font-size: 0.9rem;
     margin-top: 0.5rem;
     font-weight: 500;
+}
+
+/* API使用量显示 */
+.api-usage {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background-color: rgba(255, 255, 255, 0.9);
+    padding: 8px 15px;
+    border-radius: 20px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    z-index: 1000;
+    border: 1px solid #e0e0e0;
+    transition: all 0.3s ease;
+}
+
+.api-usage:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
+}
+
+.api-usage i {
+    color: #4CAF50;
+    font-size: 16px;
+}
+
+.api-usage span {
+    color: #333;
+    font-weight: 500;
 } 
