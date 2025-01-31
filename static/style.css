@@ -150,6 +150,10 @@ body {
     box-shadow: 0 4px 6px rgba(0,0,0,0.05);
     margin-bottom: 2rem;
     overflow: hidden;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch; /* 在iOS上支持平滑滚动 */
+    max-width: 100%;
+    box-sizing: border-box;
 }
 
 .report-header {
@@ -183,12 +187,17 @@ body {
     line-height: 1.5;
     color: var(--text-color);
     letter-spacing: 0.01em;
+    overflow-wrap: break-word;  /* 添加自动换行 */
+    word-wrap: break-word;      /* 兼容性支持 */
+    word-break: break-word;     /* 确保长单词也能换行 */
 }
 
 .report-content p {
     margin: 0.5rem 0;
     text-align: left;
     padding: 0;
+    max-width: 100%;           /* 限制最大宽度 */
+    overflow-wrap: break-word; /* 添加自动换行 */
 }
 
 .report-summary {
@@ -248,9 +257,12 @@ body {
 /* 表格样式 */
 .comparison-table {
     width: 100%;
+    min-width: 300px; /* 设置最小宽度 */
+    overflow-x: auto;
+    display: block;
+    margin: 1rem 0;
     border-collapse: separate;
     border-spacing: 0;
-    margin: 1.2rem 0;
     font-size: 0.9rem;
     box-shadow: 0 1px 3px rgba(0,0,0,0.05);
 }
@@ -336,6 +348,27 @@ body {
     .btn-primary {
         padding: 0.5rem 0.6rem;
     }
+    
+    .report-content {
+        padding: 1rem;
+        font-size: 0.9rem;
+    }
+    
+    .report-content p {
+        margin: 0.4rem 0;
+    }
+    
+    .advantages, .disadvantages {
+        padding: 0.6rem;
+        margin: 0.8rem 0;
+    }
+    
+    /* 确保在小屏幕上文字不会溢出 */
+    .report-section {
+        width: 100%;
+        box-sizing: border-box;
+        overflow-x: hidden;
+    }
 }
 
 /* 总结部分样式 */
@@ -345,6 +378,8 @@ body {
     border-radius: 6px;
     background: #f8fafc;
     text-align: left;
+    overflow-wrap: break-word;  /* 添加自动换行 */
+    word-wrap: break-word;      /* 兼容性支持 */
 }
 
 .advantages h4, .disadvantages h4 {
