@@ -115,14 +115,16 @@ document.addEventListener('DOMContentLoaded', function() {
             .map(line => {
                 const trimmedLine = line.trim();
                 
-                // 处理一级标题 (#)
-                if (trimmedLine.startsWith('# ')) {
-                    return `<h2 class="primary-title">${trimmedLine.substring(2)}</h2>`;
+                // 处理一级标题 (#)，确保标题前没有多余的空格
+                if (trimmedLine.match(/^#\s+/)) {
+                    const titleText = trimmedLine.replace(/^#\s+/, '').trim();
+                    return `<h2 class="primary-title">${titleText}</h2>`;
                 }
                 
-                // 处理二级标题 (##)
-                if (trimmedLine.startsWith('## ')) {
-                    return `<h3 class="secondary-title">${trimmedLine.substring(3)}</h3>`;
+                // 处理二级标题 (##)，确保标题前没有多余的空格
+                if (trimmedLine.match(/^##\s+/)) {
+                    const titleText = trimmedLine.replace(/^##\s+/, '').trim();
+                    return `<h3 class="secondary-title">${titleText}</h3>`;
                 }
 
                 // 处理总结部分的优势和劣势
