@@ -115,9 +115,15 @@ document.addEventListener('DOMContentLoaded', function() {
             .map(line => {
                 const trimmedLine = line.trim();
                 
+                // 处理二级标题（x.x格式）- 把这个判断提前，避免被一级标题的规则捕获
+                if (/^\d+\.\d+\s+/.test(trimmedLine)) {
+                    const [prefix, ...rest] = trimmedLine.split(' ');
+                    const titleText = rest.join(' ');
+                    return `<h3 class="secondary-title"><strong>${prefix}</strong> ${titleText}</h3>`;
+                }
+                
                 // 处理一级标题
-                if (/^\d+\.(?!\d)/.test(trimmedLine)) {
-                    // 数字开头但后面不是数字的标题（如 "1. "）
+                if (/^\d+\.\s+/.test(trimmedLine)) {
                     return `<h2 class="primary-title">${trimmedLine}</h2>`;
                 }
                 
@@ -127,13 +133,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
                 if (trimmedLine === '建议：') {
                     return `<h2 class="primary-title">6. ${trimmedLine}</h2>`;
-                }
-                
-                // 处理二级标题（x.x格式）
-                if (/^\d+\.\d+/.test(trimmedLine)) {
-                    const [prefix, ...rest] = trimmedLine.split(' ');
-                    const titleText = rest.join(' ');
-                    return `<h3 class="secondary-title"><strong>${prefix}</strong> ${titleText}</h3>`;
                 }
 
                 // 处理表格
