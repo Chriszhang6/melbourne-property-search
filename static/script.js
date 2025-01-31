@@ -151,8 +151,15 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function formatAnalysis(analysis) {
+        // 添加空值检查
+        if (!analysis) {
+            console.error('分析内容为空');
+            return '<p>暂无分析内容</p>';
+        }
+
         // 将换行符转换为HTML段落
         let formattedText = analysis
+            .toString()  // 确保输入是字符串
             .split('\n')
             .filter(line => line.trim() !== '')
             .map(line => {
@@ -161,44 +168,44 @@ document.addEventListener('DOMContentLoaded', function() {
                 // 处理一级标题 (#)，确保标题前没有多余的空格
                 if (trimmedLine.match(/^#\s+/)) {
                     const titleText = trimmedLine.replace(/^#\s+/, '').trim();
-                    return `<h2 class="primary-title">${titleText}</h2>`;
+                    return `<h2 class="primary-title">${titleText}</h2>\n\n`;  // 添加两个换行
                 }
                 
                 // 处理二级标题 (##)，确保标题前没有多余的空格
                 if (trimmedLine.match(/^##\s+/)) {
                     const titleText = trimmedLine.replace(/^##\s+/, '').trim();
-                    return `<h3 class="secondary-title">${titleText}</h3>`;
+                    return `<h3 class="secondary-title">${titleText}</h3>\n\n`;  // 添加两个换行
                 }
 
                 // 处理总结部分的优势和劣势
                 if (trimmedLine.startsWith('优势：')) {
-                    return `<div class="advantages"><h4>优势：</h4><ul>${formatList(trimmedLine.substring(3))}</ul></div>`;
+                    return `<div class="advantages"><h4>优势：</h4><ul>${formatList(trimmedLine.substring(3))}</ul></div>\n\n`;
                 }
                 if (trimmedLine.startsWith('劣势：')) {
-                    return `<div class="disadvantages"><h4>劣势：</h4><ul>${formatList(trimmedLine.substring(3))}</ul></div>`;
+                    return `<div class="disadvantages"><h4>劣势：</h4><ul>${formatList(trimmedLine.substring(3))}</ul></div>\n\n`;
                 }
 
                 // 处理表格
                 if (trimmedLine.includes('|')) {
-                    return formatTable(trimmedLine);
+                    return formatTable(trimmedLine) + '\n';
                 }
 
                 // 处理列表
                 if (trimmedLine.startsWith('- ')) {
-                    return `<li>${trimmedLine.substring(2)}</li>`;
+                    return `<li>${trimmedLine.substring(2)}</li>\n`;
                 }
                 if (trimmedLine.match(/^[a-zA-Z\u4e00-\u9fa5]\d*\./)) {
-                    return `<li>${trimmedLine.substring(trimmedLine.indexOf('.') + 1).trim()}</li>`;
+                    return `<li>${trimmedLine.substring(trimmedLine.indexOf('.') + 1).trim()}</li>\n`;
                 }
 
                 // 普通段落
-                return `<p>${trimmedLine}</p>`;
+                return `<p>${trimmedLine}</p>\n\n`;  // 添加两个换行
             })
-            .join('');
+            .join('');  // 不再需要额外的换行，因为我们在每个元素后都添加了换行
 
         // 将连续的li元素包装在ul中
         formattedText = formattedText.replace(/<li>.*?<\/li>(?:\s*<li>.*?<\/li>)+/g, match => {
-            return `<ul>${match}</ul>`;
+            return `<ul>${match}</ul>\n\n`;  // 为列表添加额外的间距
         });
 
         return formattedText;
