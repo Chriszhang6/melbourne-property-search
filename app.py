@@ -143,7 +143,7 @@ def analyze_with_openai(suburb):
                 {"role": "user", "content": f"请分析{suburb}区域的购房因素"}
             ],
             temperature=0.2,  # 降低创造性，提高稳定性
-            max_tokens=2000,
+            max_tokens=3000,
             top_p=0.8
         )
         
@@ -317,7 +317,7 @@ SYSTEM_PROMPT = """你是一个专业的澳大利亚房地产分析师。请针�
 
 # 医疗资源
 ## 公立医院
-- St Vincent’s Hospital（车程10分钟）：综合医院，以心外科和肿瘤科著称，24小时急诊。
+- St Vincent's Hospital（车程10分钟）：综合医院，以心外科和肿瘤科著称，24小时急诊。
 - Royal Melbourne Hospital（车程15分钟）：维州顶级公立医院，提供重症监护和专科服务。
 
 ## 私立医疗机构
@@ -426,7 +426,7 @@ SYSTEM_PROMPT = """你是一个专业的澳大利亚房地产分析师。请针�
 # 教育资源
 ## 公立学校
 - Balwyn High School（7-12，2023年VCE排名前5%）：维州顶尖公立中学，精英班竞争激烈，本地生需提前2年注册。
-- Balwyn Primary School（P-6，NAPLAN排名前10%）：学位紧张，优先学区范围内居民。
+- Balwyn Primary School（P-6, NAPLAN排名前10%）：学位紧张，优先学区范围内居民。
 
 ## 私立学校
 - Fintona Girls' School（P-12，女校）：年学费28,000-38,000澳元，以学术成绩和辩论项目闻名。
