@@ -132,15 +132,31 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
                 
                 // 处理二级标题
-                const secondaryTitles = [
-                    '关键项目与拨款', '未来规划',
-                    '公立学校', '私立学校', '教会学校', '短板',
-                    '公立医院', '私立医疗机构',
-                    '增长数据', '增长推动因素', '风险提示'
-                ];
+                const secondaryTitles = {
+                    '2.1 公立学校': true,
+                    '2.2 私立学校': true,
+                    '2.3 短板': true,
+                    '3.1 公立医院': true,
+                    '3.2 私立医疗机构': true,
+                    '3.3 短板': true,
+                    '4.1 单元房（Unit）': true,
+                    '4.2 独立屋（House）': true,
+                    '4.3 增长推动因素': true,
+                    '4.4 风险提示': true
+                };
                 
-                if (secondaryTitles.includes(trimmedLine)) {
+                // 检查是否是二级标题
+                const titleMatch = trimmedLine.match(/^\d+\.\d+\s+(.+)$/);
+                if (titleMatch && secondaryTitles[trimmedLine]) {
                     return `<h3 class="secondary-title">${trimmedLine}</h3>`;
+                }
+
+                // 处理总结部分的优势和劣势
+                if (trimmedLine.startsWith('优势：')) {
+                    return `<div class="advantages"><h4>优势：</h4><ul>${formatList(trimmedLine.substring(3))}</ul></div>`;
+                }
+                if (trimmedLine.startsWith('劣势：')) {
+                    return `<div class="disadvantages"><h4>劣势：</h4><ul>${formatList(trimmedLine.substring(3))}</ul></div>`;
                 }
 
                 // 处理表格
@@ -167,6 +183,14 @@ document.addEventListener('DOMContentLoaded', function() {
         });
 
         return formattedText;
+    }
+
+    // 格式化优势劣势列表
+    function formatList(text) {
+        return text.split('，')
+            .filter(item => item.trim())
+            .map(item => `<li>${item.trim()}</li>`)
+            .join('');
     }
 
     function formatTable(tableContent) {

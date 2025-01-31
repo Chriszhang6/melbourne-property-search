@@ -240,7 +240,7 @@ body {
     padding: 0.5rem 0.8rem;
     background: rgba(45, 212, 191, 0.05);
     border-radius: 4px;
-    margin-left: 0.5rem;
+    margin-left: 1.5rem;
     letter-spacing: 0.01em;
 }
 
@@ -357,4 +357,38 @@ body {
         margin: 1.5rem 0 0.8rem;
         padding: 0.4rem 0.6rem;
     }
+}
+
+/* 总结部分样式 */
+.advantages, .disadvantages {
+    margin: 1.5rem 0;
+    padding: 1.2rem;
+    border-radius: 6px;
+    background: #f8fafc;
+}
+
+.advantages h4, .disadvantages h4 {
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin: 0 0 1rem;
+    color: var(--text-color);
+}
+
+.advantages {
+    border-left: 4px solid var(--secondary-color);
+}
+
+.disadvantages {
+    border-left: 4px solid #f43f5e;
+}
+
+.advantages ul, .disadvantages ul {
+    margin: 0.5rem 0 0;
+    padding-left: 1.5rem;
+}
+
+.advantages li, .disadvantages li {
+    margin-bottom: 0.5rem;
+    line-height: 1.6;
+    color: var(--text-color);
 } 
