@@ -198,15 +198,12 @@ body {
     font-weight: 700;
     color: var(--text-color);
     margin: 2.5rem 0 1.5rem;
-    padding-bottom: 0.8rem;
+    padding: 1rem 0;
     border-bottom: 3px solid var(--primary-color);
     position: relative;
     display: block;
     width: 100%;
     text-align: left;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
 }
 
 .primary-title::before {
@@ -227,22 +224,21 @@ body {
 
 /* 二级标题样式 */
 .secondary-title {
-    font-size: 1.4rem;
-    font-weight: 600;
+    font-size: 1.3rem;
+    font-weight: 500;
     color: var(--text-color);
-    margin: 2rem 0 1rem;
-    padding: 0.8rem 1rem;
-    border-left: 4px solid var(--secondary-color);
+    margin: 1.5rem 0 1rem;
+    padding: 0.6rem 1rem;
+    border-left: 3px solid var(--secondary-color);
     background: linear-gradient(to right, rgba(45, 212, 191, 0.05), transparent);
     border-radius: 0 8px 8px 0;
+    margin-left: 1rem;
 }
 
 .secondary-title strong {
-    background: linear-gradient(120deg, var(--primary-color), var(--secondary-color));
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-    text-fill-color: transparent;
+    color: var(--primary-color);
+    font-weight: 600;
+    margin-right: 0.5rem;
 }
 
 .analysis-content h3 {
@@ -353,11 +349,14 @@ body {
     
     .primary-title {
         font-size: 1.5rem;
+        padding: 0.8rem 0;
         margin: 2rem 0 1.2rem;
     }
     
     .secondary-title {
-        font-size: 1.2rem;
-        margin: 1.5rem 0 1rem;
+        font-size: 1.1rem;
+        padding: 0.5rem 0.8rem;
+        margin: 1.2rem 0 0.8rem;
+        margin-left: 0.8rem;
     }
 } 

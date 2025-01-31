@@ -115,22 +115,25 @@ document.addEventListener('DOMContentLoaded', function() {
             .map(line => {
                 const trimmedLine = line.trim();
                 
-                // 处理所有一级标题
-                if (/^\d+\./.test(trimmedLine)) {
-                    // 已经有数字编号的标题
+                // 处理一级标题
+                if (/^\d+\.(?!\d)/.test(trimmedLine)) {
+                    // 数字开头但后面不是数字的标题（如 "1. "）
                     return `<h2 class="primary-title">${trimmedLine}</h2>`;
-                } else if (trimmedLine === '医疗资源') {
-                    return `<h2 class="primary-title">3. 医疗资源</h2>`;
-                } else if (trimmedLine === '房价趋势与推动因素') {
-                    return `<h2 class="primary-title">4. 房价趋势与推动因素</h2>`;
-                } else if (trimmedLine.startsWith('总结：')) {
+                }
+                
+                // 处理特殊的一级标题（总结和建议）
+                if (trimmedLine.startsWith('总结：')) {
                     return `<h2 class="primary-title">5. ${trimmedLine}</h2>`;
+                }
+                if (trimmedLine === '建议：') {
+                    return `<h2 class="primary-title">6. ${trimmedLine}</h2>`;
                 }
                 
                 // 处理二级标题（x.x格式）
                 if (/^\d+\.\d+/.test(trimmedLine)) {
-                    const titleText = trimmedLine.substring(trimmedLine.indexOf('.', trimmedLine.indexOf('.') + 1) + 1).trim();
-                    return `<h3 class="secondary-title"><strong>${trimmedLine.split('.', 2).join('.')} ${titleText}</strong></h3>`;
+                    const [prefix, ...rest] = trimmedLine.split(' ');
+                    const titleText = rest.join(' ');
+                    return `<h3 class="secondary-title"><strong>${prefix}</strong> ${titleText}</h3>`;
                 }
 
                 // 处理表格
