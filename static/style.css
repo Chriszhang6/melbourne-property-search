@@ -169,6 +169,7 @@ body {
     font-weight: 500;
 }
 
+/* 报告内容样式 */
 .report-content {
     padding: 2rem;
     font-size: 0.95rem;
@@ -179,7 +180,8 @@ body {
 
 .report-content p {
     margin: 0.8rem 0;
-    text-align: justify;
+    text-align: left;
+    padding: 0;
 }
 
 .report-summary {
@@ -205,75 +207,35 @@ body {
 .primary-title {
     font-size: 1.5rem;
     font-weight: 600;
-    color: var(--text-color);
-    margin: 2.5rem 0 1.2rem;
-    padding: 0.6rem 0;
-    position: relative;
+    color: var(--primary-color);
+    margin: 2rem 0 1rem;
+    padding: 0;
     display: block;
     width: 100%;
     text-align: left;
-    letter-spacing: 0.02em;
-}
-
-.primary-title::before {
-    content: '';
-    position: absolute;
-    bottom: -3px;
-    left: 0;
-    width: 100px;
-    height: 3px;
-    background: linear-gradient(to right, var(--primary-color), var(--secondary-color));
-}
-
-/* 确保标题内的数字和文本对齐 */
-.primary-title::first-letter {
-    margin-left: 0;
-    padding-left: 0;
 }
 
 /* 二级标题样式 */
 .secondary-title {
     font-size: 1.1rem;
     font-weight: 500;
-    color: var(--text-color);
-    margin: 1.8rem 0 1rem;
-    padding: 0.5rem 0.8rem;
-    background: rgba(45, 212, 191, 0.05);
-    border-radius: 4px;
-    margin-left: 1.5rem;
-    letter-spacing: 0.01em;
-}
-
-.secondary-title strong {
-    color: var(--primary-color);
-    font-weight: 600;
-    margin-right: 0.5rem;
-}
-
-.analysis-content h3 {
-    font-size: 1.4rem;
-    font-weight: 600;
-    color: var(--text-color);
-    margin: 2rem 0 1rem;
-    padding-bottom: 0.5rem;
-    border-bottom: 2px solid var(--border-color);
-}
-
-.analysis-content h4 {
-    font-size: 1.1rem;
-    font-weight: 500;
-    color: var(--text-color);
+    color: var(--secondary-color);
     margin: 1.5rem 0 1rem;
+    padding: 0;
+    text-align: left;
 }
 
-.analysis-content ul {
-    padding-left: 1.2rem;
+/* 列表样式 */
+.report-content ul {
     margin: 0.8rem 0;
+    padding-left: 1.2rem;
+    text-align: left;
 }
 
-.analysis-content li {
+.report-content li {
     margin-bottom: 0.4rem;
     line-height: 1.6;
+    text-align: left;
 }
 
 /* 表格样式 */
@@ -362,16 +324,18 @@ body {
 /* 总结部分样式 */
 .advantages, .disadvantages {
     margin: 1.5rem 0;
-    padding: 1.2rem;
+    padding: 1rem;
     border-radius: 6px;
     background: #f8fafc;
+    text-align: left;
 }
 
 .advantages h4, .disadvantages h4 {
     font-size: 1.1rem;
     font-weight: 600;
-    margin: 0 0 1rem;
-    color: var(--text-color);
+    margin: 0 0 0.5rem;
+    padding: 0;
+    text-align: left;
 }
 
 .advantages {
@@ -380,15 +344,4 @@ body {
 
 .disadvantages {
     border-left: 4px solid #f43f5e;
-}
-
-.advantages ul, .disadvantages ul {
-    margin: 0.5rem 0 0;
-    padding-left: 1.5rem;
-}
-
-.advantages li, .disadvantages li {
-    margin-bottom: 0.5rem;
-    line-height: 1.6;
-    color: var(--text-color);
 } 
