@@ -113,48 +113,41 @@ document.addEventListener('DOMContentLoaded', function() {
             .split('\n')
             .filter(line => line.trim() !== '')
             .map(line => {
-                // 处理一级标题（数字开头或特定标题）
-                if (/^\d+\./.test(line) || line.startsWith('总结：') || line === '医疗资源' || line === '房价趋势与推动因素') {
-                    let titleText, titleNumber;
-                    
-                    if (line.startsWith('总结：')) {
-                        titleNumber = '5';
-                        titleText = line;
-                    } else if (line === '医疗资源') {
-                        titleNumber = '3';
-                        titleText = line;
-                    } else if (line === '房价趋势与推动因素') {
-                        titleNumber = '4';
-                        titleText = line;
-                    } else {
-                        titleNumber = line.split('.')[0];
-                        titleText = line.substring(line.indexOf('.') + 1).trim();
-                    }
-                    
-                    return `<h2 class="primary-title">${titleNumber}. ${titleText}</h2>`;
+                const trimmedLine = line.trim();
+                
+                // 处理所有一级标题
+                if (/^\d+\./.test(trimmedLine)) {
+                    // 已经有数字编号的标题
+                    return `<h2 class="primary-title">${trimmedLine}</h2>`;
+                } else if (trimmedLine === '医疗资源') {
+                    return `<h2 class="primary-title">3. 医疗资源</h2>`;
+                } else if (trimmedLine === '房价趋势与推动因素') {
+                    return `<h2 class="primary-title">4. 房价趋势与推动因素</h2>`;
+                } else if (trimmedLine.startsWith('总结：')) {
+                    return `<h2 class="primary-title">5. ${trimmedLine}</h2>`;
                 }
                 
                 // 处理二级标题（x.x格式）
-                if (/^\d+\.\d+/.test(line)) {
-                    const titleText = line.substring(line.indexOf('.', line.indexOf('.') + 1) + 1).trim();
-                    return `<h3 class="secondary-title"><strong>${line.split('.', 2).join('.')} ${titleText}</strong></h3>`;
+                if (/^\d+\.\d+/.test(trimmedLine)) {
+                    const titleText = trimmedLine.substring(trimmedLine.indexOf('.', trimmedLine.indexOf('.') + 1) + 1).trim();
+                    return `<h3 class="secondary-title"><strong>${trimmedLine.split('.', 2).join('.')} ${titleText}</strong></h3>`;
                 }
 
                 // 处理表格
-                if (line.includes('|')) {
-                    return formatTable(line);
+                if (trimmedLine.includes('|')) {
+                    return formatTable(trimmedLine);
                 }
 
                 // 处理列表
-                if (line.startsWith('- ')) {
-                    return `<li>${line.substring(2)}</li>`;
+                if (trimmedLine.startsWith('- ')) {
+                    return `<li>${trimmedLine.substring(2)}</li>`;
                 }
-                if (line.match(/^[a-zA-Z\u4e00-\u9fa5]\d*\./)) {
-                    return `<li>${line.substring(line.indexOf('.') + 1).trim()}</li>`;
+                if (trimmedLine.match(/^[a-zA-Z\u4e00-\u9fa5]\d*\./)) {
+                    return `<li>${trimmedLine.substring(trimmedLine.indexOf('.') + 1).trim()}</li>`;
                 }
 
                 // 普通段落
-                return `<p>${line}</p>`;
+                return `<p>${trimmedLine}</p>`;
             })
             .join('');
 
