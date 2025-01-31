@@ -20,6 +20,9 @@ document.addEventListener('DOMContentLoaded', function() {
         hideError();
         hideReport();
 
+        // 记录开始时间
+        const startTime = new Date();
+
         try {
             const response = await fetch('/search', {
                 method: 'POST',
@@ -40,7 +43,11 @@ document.addEventListener('DOMContentLoaded', function() {
                 return;
             }
 
-            displayReport(suburb, data.analysis);
+            // 计算分析时间
+            const endTime = new Date();
+            const analysisTime = ((endTime - startTime) / 1000).toFixed(1);
+
+            displayReport(suburb, data.analysis, analysisTime);
 
         } catch (error) {
             showError('分析过程中发生错误，请稍后重试');
@@ -77,7 +84,7 @@ document.addEventListener('DOMContentLoaded', function() {
         reportSection.style.display = 'none';
     }
 
-    function displayReport(suburb, analysis) {
+    function displayReport(suburb, analysis, analysisTime) {
         const currentDate = new Date().toLocaleDateString('zh-CN', {
             year: 'numeric',
             month: 'long',
@@ -87,8 +94,9 @@ document.addEventListener('DOMContentLoaded', function() {
         reportSection.style.display = 'block';
         reportSection.innerHTML = `
             <div class="report-header">
-                <h2>${suburb} 房产投资分析报告</h2>
+                <h2>${suburb} 区域分析报告</h2>
                 <p class="report-date">生成日期：${currentDate}</p>
+                <p class="analysis-time">分析耗时：${analysisTime} 秒</p>
             </div>
             <div class="report-content">
                 ${formatAnalysis(analysis)}
@@ -106,9 +114,9 @@ document.addEventListener('DOMContentLoaded', function() {
             .filter(line => line.trim() !== '')
             .map(line => {
                 // 处理一级标题（数字开头）
-                if (/^\d+\./.test(line)) {
-                    const titleText = line.substring(line.indexOf('.') + 1).trim();
-                    return `<h2 class="primary-title">${line.split('.')[0]}. ${titleText}</h2>`;
+                if (/^\d+\./.test(line) || line.startsWith('总结：')) {
+                    const titleText = line.startsWith('总结：') ? line : line.substring(line.indexOf('.') + 1).trim();
+                    return `<h2 class="primary-title">${line.startsWith('总结：') ? '7. ' + titleText : line}</h2>`;
                 }
                 
                 // 处理二级标题（x.x格式）
