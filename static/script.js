@@ -5,28 +5,6 @@ document.addEventListener('DOMContentLoaded', function() {
     const loadingContainer = document.getElementById('loadingContainer');
     const reportSection = document.getElementById('reportSection');
     const errorContainer = document.getElementById('errorContainer');
-    const printButton = document.getElementById('printButton');
-
-    // 添加打印按钮事件监听
-    printButton.addEventListener('click', function() {
-        // 使用html2pdf库将报告转换为PDF
-        const element = reportSection;
-        const opt = {
-            margin: [10, 10],
-            filename: `${searchInput.value.trim()}_区域分析报告.pdf`,
-            image: { type: 'jpeg', quality: 0.98 },
-            html2canvas: { scale: 2 },
-            jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
-        };
-
-        // 显示加载提示
-        showLoading();
-        
-        // 转换为PDF
-        html2pdf().set(opt).from(element).save().then(() => {
-            hideLoading();
-        });
-    });
 
     searchForm.addEventListener('submit', async function(e) {
         e.preventDefault();
@@ -41,7 +19,6 @@ document.addEventListener('DOMContentLoaded', function() {
         showLoading();
         hideError();
         hideReport();
-        printButton.style.display = 'none';
 
         // 记录开始时间
         const startTime = new Date();
@@ -71,8 +48,6 @@ document.addEventListener('DOMContentLoaded', function() {
             const analysisTime = ((endTime - startTime) / 1000).toFixed(1);
 
             displayReport(suburb, data.analysis, analysisTime);
-            // 显示打印按钮
-            printButton.style.display = 'flex';
 
         } catch (error) {
             showError('分析过程中发生错误，请稍后重试');
@@ -126,10 +101,52 @@ document.addEventListener('DOMContentLoaded', function() {
             <div class="report-content">
                 ${formatAnalysis(analysis)}
             </div>
+            <button class="print-button" onclick="downloadPDF()">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+                下载PDF
+            </button>
         `;
 
         // 滚动到报告部分
         reportSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+
+    function downloadPDF() {
+        const reportContent = document.querySelector('.report-section');
+        const suburb = reportContent.querySelector('h2').textContent;
+        
+        // 创建一个新的打印窗口
+        const printWindow = window.open('', '_blank');
+        printWindow.document.write(`
+            <html>
+            <head>
+                <title>${suburb}</title>
+                <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+                <link href="/static/style.css" rel="stylesheet">
+                <style>
+                    body {
+                        padding: 2rem;
+                        font-family: 'Inter', sans-serif;
+                    }
+                    @page {
+                        size: A4;
+                        margin: 2cm;
+                    }
+                </style>
+            </head>
+            <body>
+                ${reportContent.innerHTML}
+            </body>
+            </html>
+        `);
+        
+        // 等待样式加载完成后打印
+        setTimeout(() => {
+            printWindow.print();
+            printWindow.close();
+        }, 1000);
     }
 
     function formatAnalysis(analysis) {
@@ -138,22 +155,17 @@ document.addEventListener('DOMContentLoaded', function() {
             .split('\n')
             .filter(line => line.trim() !== '')
             .map(line => {
-                // 先去除行首和行尾的空格
-                let trimmedLine = line.trim();
+                const trimmedLine = line.trim();
                 
                 // 处理一级标题 (#)，确保标题前没有多余的空格
-                if (trimmedLine.startsWith('#')) {
-                    // 移除所有#号和后面的空格
-                    const titleText = trimmedLine.replace(/^#+\s*/, '').trim();
-                    // 确保没有多余的空格
+                if (trimmedLine.match(/^#\s+/)) {
+                    const titleText = trimmedLine.replace(/^#\s+/, '').trim();
                     return `<h2 class="primary-title">${titleText}</h2>`;
                 }
                 
                 // 处理二级标题 (##)，确保标题前没有多余的空格
-                if (trimmedLine.startsWith('##')) {
-                    // 移除所有#号和后面的空格
-                    const titleText = trimmedLine.replace(/^#+\s*/, '').trim();
-                    // 确保没有多余的空格
+                if (trimmedLine.match(/^##\s+/)) {
+                    const titleText = trimmedLine.replace(/^##\s+/, '').trim();
                     return `<h3 class="secondary-title">${titleText}</h3>`;
                 }
 

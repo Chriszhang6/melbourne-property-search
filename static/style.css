@@ -351,21 +351,22 @@ body {
     position: fixed;
     bottom: 2rem;
     right: 2rem;
-    background: var(--primary-color);
+    background: linear-gradient(to right, var(--primary-color), var(--secondary-color));
     color: white;
     padding: 0.8rem 1.5rem;
     border-radius: 8px;
+    border: none;
     box-shadow: 0 2px 8px rgba(0,0,0,0.15);
     cursor: pointer;
-    transition: all 0.3s ease;
+    font-weight: 500;
     display: flex;
     align-items: center;
     gap: 0.5rem;
     z-index: 1000;
+    transition: all 0.3s ease;
 }
 
 .print-button:hover {
-    background: var(--secondary-color);
     transform: translateY(-2px);
     box-shadow: 0 4px 12px rgba(0,0,0,0.2);
 }
@@ -375,14 +376,13 @@ body {
     height: 1.2rem;
 }
 
-/* 打印样式 */
 @media print {
-    body {
-        background: white;
+    .print-button {
+        display: none;
     }
     
-    .app-header, .search-section, .print-button, .app-footer {
-        display: none !important;
+    body {
+        background: white;
     }
     
     .report-section {
@@ -391,15 +391,7 @@ body {
         padding: 0;
     }
     
-    .report-content {
-        padding: 0;
-    }
-    
-    .primary-title, .secondary-title {
-        break-after: avoid;
-    }
-    
-    .advantages, .disadvantages {
-        break-inside: avoid;
+    .app-header, .search-section, .app-footer {
+        display: none;
     }
 } 

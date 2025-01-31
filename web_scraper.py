@@ -42,7 +42,7 @@ async def fetch_property_data(suburb: str, context) -> dict:
                 properties = await page.query_selector_all(selector)
                 if properties:
                     print(f"找到 {len(properties)} 个房产信息")
-                    break
+                                break
             except Exception as e:
                 print(f"选择器 {selector} 失败: {str(e)}")
                 continue
@@ -132,7 +132,7 @@ async def main():
             if results:
                 print(f"\n{args.suburb}区域的房产信息：")
                 display_results(results)
-            else:
+        else:
                 print("未找到房产信息")
         finally:
             await browser.close()
