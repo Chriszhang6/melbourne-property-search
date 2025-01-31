@@ -19,8 +19,14 @@ logger = logging.getLogger(__name__)
 # 加载环境变量
 load_dotenv()
 
+# 检查 OpenAI API key
+api_key = os.getenv('OPENAI_API_KEY')
+if not api_key:
+    logger.error("未找到 OPENAI_API_KEY 环境变量")
+    raise ValueError("未找到 OPENAI_API_KEY 环境变量")
+
 # 配置OpenAI API
-client = OpenAI(api_key=os.getenv('OPENAI_API_KEY'))
+client = OpenAI(api_key=api_key)
 
 app = Flask(__name__)
 # 确保JSON输出中文不被转义
@@ -302,18 +308,27 @@ def search():
         
         # 使用新的标准化函数处理输入
         suburb = standardize_suburb(suburb)
-        logger.info(f"分析区域: {suburb}")
+        logger.info(f"开始分析区域: {suburb}")
         
-        # 直接使用OpenAI分析
-        analysis = analyze_with_openai(suburb)
-        
-        return jsonify({
-            'analysis': analysis,
-            'disclaimer': '注意：本报告中的数据仅供参考，具体信息请以官方发布为准。'
-        })
+        try:
+            # 直接使用OpenAI分析
+            analysis = analyze_with_openai(suburb)
+            if not analysis:
+                logger.error("OpenAI返回空响应")
+                return jsonify({'error': '生成分析报告失败，请重试'}), 500
+                
+            logger.info(f"成功生成{suburb}的分析报告")
+            return jsonify({
+                'analysis': analysis,
+                'disclaimer': '注意：本报告中的数据仅供参考，具体信息请以官方发布为准。'
+            })
+        except Exception as api_error:
+            logger.error(f"OpenAI API调用失败: {str(api_error)}")
+            return jsonify({'error': '生成分析报告时出错，请稍后重试'}), 500
+            
     except Exception as e:
         logger.error(f"处理请求时出错: {str(e)}")
-        return jsonify({'error': str(e)}), 500
+        return jsonify({'error': '服务器内部错误，请稍后重试'}), 500
 
 @app.route('/test_api', methods=['GET'])
 def test_api():
